@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>HA-Liste</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="HA-Liste">
+<meta name="theme-color" content="#1f5f8b">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--ink:#1c2430;--mute:#66707c;--line:#dde2e8;--pri:#1f5f8b;--pri-ink:#fff;--f:#d64545;--f-bg:#fde8e8;--u:#c98a00;--u-bg:#fff4d6;--ok:#2e8b57;--ok-bg:#e3f4ea}
+@media (prefers-color-scheme:dark){:root{--bg:#12161b;--card:#1c222a;--ink:#e8edf2;--mute:#9aa4af;--line:#2c343e;--pri:#2f74a6;--pri-ink:#fff;--f:#ff7a7a;--f-bg:#3a1f22;--u:#f0b93a;--u-bg:#3a3020;--ok:#5fcf8f;--ok-bg:#1d3327}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+.top{position:sticky;top:0;z-index:5}
+header{display:flex;align-items:center;gap:4px;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px;background:var(--pri);color:var(--pri-ink)}
+header h1{flex:1;margin:0 4px;font-size:19px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.iconbtn{background:none;border:0;color:inherit;font-size:26px;min-width:44px;min-height:44px;cursor:pointer;line-height:1}
+.iconbtn.sm{font-size:24px;color:var(--pri);border:1px solid var(--line);background:var(--card);border-radius:10px}
+nav{display:flex;background:var(--card);border-bottom:1px solid var(--line)}
+nav[hidden]{display:none}
+nav button{flex:1;padding:12px 4px;border:0;background:none;color:var(--mute);font-size:15px;font-weight:600;border-bottom:3px solid transparent;cursor:pointer}
+nav button.on{color:var(--pri);border-bottom-color:var(--pri)}
+main{padding:16px 16px calc(env(safe-area-inset-bottom) + 32px);max-width:1000px;margin:0 auto}
+h2{font-size:17px;margin:22px 0 10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px}
+.card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;text-align:left;color:var(--ink);cursor:pointer;font:inherit}
+.cname{font-size:24px;font-weight:700}
+.cmeta{color:var(--mute);font-size:14px}
+.btn{padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;min-height:44px}
+.btn.primary{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
+.btn.danger{color:var(--f);border-color:var(--f)}
+.btn.small{padding:6px 10px;min-height:36px;font-size:14px}
+.wide{width:100%}
+.ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.ctrl .grow{flex:1;min-width:140px}
+input,select,textarea{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);min-height:44px;max-width:100%}
+textarea{width:100%;min-height:150px}
+.hint{color:var(--mute);font-size:14px;margin:4px 0 12px}
+.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:13px;font-weight:700}
+.pill.f{background:var(--f-bg);color:var(--f)}.pill.u{background:var(--u-bg);color:var(--u)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.stu{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;min-height:80px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);text-align:left;font:inherit;cursor:pointer;user-select:none;-webkit-user-select:none}
+.stu .sn{font-weight:600;line-height:1.2;padding-right:28px}
+.stu .badge{font-size:13px;font-weight:700;min-height:18px}
+.stu .tot{position:absolute;top:8px;right:9px;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
+.stu.f{border-color:var(--f);background:var(--f-bg)}.stu.f .badge{color:var(--f)}
+.stu.u{border-color:var(--u);background:var(--u-bg)}.stu.u .badge{color:var(--u)}
+.summary{margin:14px 0 0;color:var(--mute);font-size:14px}
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+th,td{padding:11px 10px;border-bottom:1px solid var(--line);text-align:left}
+th{font-size:13px;color:var(--mute);font-weight:600}
+td.n,th.n{text-align:center;font-variant-numeric:tabular-nums;width:56px}
+tr.row{cursor:pointer}
+.dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle}
+.dot.g{background:var(--ok)}.dot.y{background:var(--u)}.dot.r{background:var(--f)}
+tr.detail td{background:var(--bg);font-size:14px;color:var(--mute);padding:8px 14px}
+tr.detail ul{margin:0;padding-left:18px}
+.empty{padding:28px 16px;text-align:center;color:var(--mute)}
+.note{background:var(--u-bg);border:1px solid var(--u);border-radius:12px;padding:12px 14px;margin:0 0 16px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.note span{flex:1;min-width:180px}
+.list{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.li{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 14px;background:var(--card);border-bottom:1px solid var(--line)}
+.li:last-child{border-bottom:0}
+.li span{flex:1}
+.li .iconbtn{font-size:18px;color:var(--mute);min-width:40px;min-height:40px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field label{font-weight:600;font-size:14px;color:var(--mute)}
+.actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+#toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translate(-50%,120px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:20px;opacity:0;transition:.25s;z-index:20;pointer-events:none}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+dialog{border:0;border-radius:16px;padding:20px;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog h3{margin:0 0 14px}
+.muted{color:var(--mute);font-size:14px}
+</style>
+</head>
+<body>
+<div class="top">
+  <header>
+    <button id="back" class="iconbtn" aria-label="Zurück" hidden>‹</button>
+    <h1 id="title">HA-Liste</h1>
+    <button id="menu" class="iconbtn" aria-label="Einstellungen">⚙︎</button>
+  </header>
+  <nav id="tabs" hidden>
+    <button data-tab="erfassen">Erfassen</button>
+    <button data-tab="uebersicht">Übersicht</button>
+    <button data-tab="verwalten">Klasse</button>
+  </nav>
+</div>
+<main id="view"></main>
+<div id="toast"></div>
+<dialog id="dlg"></dialog>
+<input type="file" id="importFile" accept=".json,application/json" hidden>
+
+<script>
+'use strict';
+const KEY = 'ha-liste-v1';
+const $ = s => document.querySelector(s);
+const main = $('#view');
+const pad = n => String(n).padStart(2, '0');
+const isoOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => isoOf(new Date());
+const fmt = iso => { const [y, m, d] = iso.split('-'); return `${d}.${m}.${y}`; };
+const wd = iso => ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][new Date(iso + 'T12:00').getDay()];
+const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const byName = (a, b) => a.name.localeCompare(b.name, 'de');
+
+/* ---------- Speicher ---------- */
+function fresh() { return { v: 1, settings: { gelb: 2, rot: 3, halb: 0.5 }, classes: [], entries: {}, lastBackup: null }; }
+function normalize(s) {
+  const n = fresh();
+  if (!s || !Array.isArray(s.classes)) return null;
+  n.settings = Object.assign(n.settings, s.settings || {});
+  n.classes = s.classes.map(c => ({ id: c.id || uid(), name: String(c.name || 'Klasse'), subjects: (c.subjects && c.subjects.length) ? c.subjects.map(String) : ['Mathe'], lastSubj: c.lastSubj || null, students: (c.students || []).map(st => ({ id: st.id || uid(), name: String(st.name) })) }));
+  n.entries = s.entries || {};
+  n.lastBackup = s.lastBackup || null;
+  return n;
+}
+function load() {
+  try { const r = localStorage.getItem(KEY); if (r) { const n = normalize(JSON.parse(r)); if (n) return n; } } catch (e) { }
+  return fresh();
+}
+let S = load();
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); }
+  catch (e) { toast('⚠️ Speichern fehlgeschlagen'); }
+}
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
+
+/* ---------- UI-Zustand ---------- */
+let ui = { screen: 'home', cid: null, tab: 'erfassen', date: today(), subj: null, ovSubj: '*', ovRange: 'hj', detail: null };
+const cls = () => S.classes.find(c => c.id === ui.cid);
+function curSubj(c) { let s = ui.subj || c.lastSubj; if (!c.subjects.includes(s)) s = c.subjects[0]; return s; }
+
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2200); }
+
+function render() {
+  const c = cls();
+  if (ui.screen === 'class' && c) {
+    $('#title').textContent = c.name;
+    $('#back').hidden = false;
+    $('#tabs').hidden = false;
+    document.querySelectorAll('#tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === ui.tab));
+    if (ui.tab === 'erfassen') renderErfassen(c);
+    else if (ui.tab === 'uebersicht') renderUebersicht(c);
+    else renderVerwalten(c);
+  } else {
+    ui.screen = 'home';
+    $('#title').textContent = 'HA-Liste';
+    $('#back').hidden = true;
+    $('#tabs').hidden = true;
+    renderHome();
+  }
+}
+
+/* ---------- Start: Klassenwahl ---------- */
+function renderHome() {
+  let h = '';
+  const standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+  if (!standalone) h += `<div class="note"><span>Für Offline-Nutzung und dauerhafte Speicherung: in Safari <b>Teilen → Zum Home-Bildschirm</b> und die App von dort starten.</span></div>`;
+  if (S.classes.length) {
+    const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
+    if (days === null || days >= 14) h += `<div class="note"><span>Letzte Sicherung: <b>${days === null ? 'noch nie' : 'vor ' + days + ' Tagen'}</b>. Die Daten liegen nur auf diesem Gerät.</span><button class="btn small" data-act="backup">Jetzt sichern</button></div>`;
+    h += `<h2>Klasse wählen</h2><div class="cards">` + S.classes.slice().sort(byName).map(c =>
+      `<button class="card" data-act="openClass" data-cid="${c.id}"><span class="cname">${esc(c.name)}</span><span class="cmeta">${c.students.length} Schüler · ${c.subjects.map(esc).join(', ')}</span></button>`).join('') + `</div>`;
+  } else {
+    h += `<div class="empty">Noch keine Klassen angelegt.</div>`;
+  }
+  h += `<button class="btn primary wide" data-act="addClass">+ Klasse anlegen</button>`;
+  main.innerHTML = h;
+}
+
+/* ---------- Erfassen ---------- */
+function totalsFor(c, subj) {
+  const t = {}; const E = S.entries[c.id] || {};
+  for (const k in E) { if (k.slice(11) !== subj) continue; for (const sid in E[k]) t[sid] = (t[sid] || 0) + 1; }
+  return t;
+}
+function renderErfassen(c) {
+  const subj = curSubj(c);
+  const day = ((S.entries[c.id] || {})[ui.date + '|' + subj]) || {};
+  const tot = totalsFor(c, subj);
+  let h = `<div class="ctrl">
+    <button class="iconbtn sm" data-act="day" data-d="-1" aria-label="Vorheriger Schultag">‹</button>
+    <input type="date" data-chg="date" value="${ui.date}">
+    <button class="iconbtn sm" data-act="day" data-d="1" aria-label="Nächster Schultag">›</button>
+    <b>${wd(ui.date)}</b>
+    <select class="grow" data-chg="subj">${c.subjects.map(s => `<option ${s === subj ? 'selected' : ''}>${esc(s)}</option>`).join('')}<option value="__new">+ Fach hinzufügen…</option></select>
+  </div>
+  <p class="hint">Antippen: <span class="pill f">fehlt</span> → <span class="pill u">unvollständig</span> → zurücksetzen. Zahl oben rechts = Einträge gesamt in ${esc(subj)}.</p>`;
+  if (!c.students.length) {
+    h += `<div class="empty">Noch keine Schüler in dieser Klasse.<br><br><button class="btn primary" data-act="tab" data-tab="verwalten">Schüler eintragen</button></div>`;
+  } else {
+    h += `<div class="grid">` + c.students.map(st => {
+      const v = day[st.id] || '';
+      return `<button class="stu ${v}" data-act="toggle" data-sid="${st.id}"><span class="sn">${esc(st.name)}</span><span class="badge">${v === 'f' ? 'fehlt' : v === 'u' ? 'unvollständig' : ''}</span>${tot[st.id] ? `<span class="tot">${tot[st.id]}</span>` : ''}</button>`;
+    }).join('') + `</div>`;
+    const vals = Object.values(day);
+    const nf = vals.filter(v => v === 'f').length, nu = vals.filter(v => v === 'u').length;
+    h += `<p class="summary">${fmt(ui.date)} · ${esc(subj)}: ${nf} fehlt, ${nu} unvollständig. Wird automatisch gespeichert.</p>`;
+  }
+  main.innerHTML = h;
+}
+function shiftDay(iso, delta) {
+  const d = new Date(iso + 'T12:00');
+  do { d.setDate(d.getDate() + delta); } while (d.getDay() === 0 || d.getDay() === 6);
+  return isoOf(d);
+}
+
+/* ---------- Übersicht ---------- */
+function rangeFrom(r) {
+  const [y, m] = today().split('-').map(Number);
+  if (r === 'hj') return m >= 8 ? `${y}-08-01` : (m === 1 ? `${y - 1}-08-01` : `${y}-02-01`);
+  if (r === 'sj') return m >= 8 ? `${y}-08-01` : `${y - 1}-08-01`;
+  if (r === '4w') { const d = new Date(); d.setDate(d.getDate() - 28); return isoOf(d); }
+  return '';
+}
+function stats(c, subj, from) {
+  const res = {};
+  c.students.forEach(s => res[s.id] = { f: 0, u: 0, list: [] });
+  const E = S.entries[c.id] || {};
+  for (const k in E) {
+    const d = k.slice(0, 10), sj = k.slice(11);
+    if (subj !== '*' && sj !== subj) continue;
+    if (from && d < from) continue;
+    for (const sid in E[k]) { const r = res[sid]; if (!r) continue; const v = E[k][sid]; r[v]++; r.list.push({ d, sj, v }); }
+  }
+  for (const sid in res) { const r = res[sid]; r.p = r.f + r.u * S.settings.halb; r.list.sort((a, b) => b.d.localeCompare(a.d)); }
+  return res;
+}
+const ampel = p => p >= S.settings.rot ? 'r' : p >= S.settings.gelb ? 'y' : 'g';
+function renderUebersicht(c) {
+  if (ui.ovSubj !== '*' && !c.subjects.includes(ui.ovSubj)) ui.ovSubj = '*';
+  const from = rangeFrom(ui.ovRange);
+  const st = stats(c, ui.ovSubj, from);
+  const rows = c.students.slice().sort((a, b) => (st[b.id].p - st[a.id].p) || byName(a, b));
+  const nr = rows.filter(s => ampel(st[s.id].p) === 'r').length, ny = rows.filter(s => ampel(st[s.id].p) === 'y').length;
+  let h = `<div class="ctrl">
+    <select class="grow" data-chg="ovSubj"><option value="*">Alle Fächer</option>${c.subjects.map(s => `<option ${s === ui.ovSubj ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+    <select class="grow" data-chg="ovRange">
+      ${[['hj', 'Dieses Halbjahr'], ['sj', 'Dieses Schuljahr'], ['4w', 'Letzte 4 Wochen'], ['all', 'Gesamt']].map(([v, l]) => `<option value="${v}" ${v === ui.ovRange ? 'selected' : ''}>${l}</option>`).join('')}
+    </select>
+  </div>
+  <p class="hint">${from ? 'Seit ' + fmt(from) : 'Alle Einträge'} · <span class="dot r"></span> ${nr} &nbsp; <span class="dot y"></span> ${ny} · Ampel: gelb ab ${S.settings.gelb}, rot ab ${S.settings.rot} Punkten (unvollständig = ${String(S.settings.halb).replace('.', ',')}). Zeile antippen für Details.</p>`;
+  if (!rows.length) { main.innerHTML = h + `<div class="empty">Keine Schüler.</div>`; return; }
+  h += `<table><thead><tr><th></th><th>Name</th><th class="n">fehlt</th><th class="n">unv.</th></tr></thead><tbody>`;
+  rows.forEach(s => {
+    const r = st[s.id];
+    h += `<tr class="row" data-act="detail" data-sid="${s.id}"><td style="width:30px"><span class="dot ${ampel(r.p)}"></span></td><td>${esc(s.name)}</td><td class="n">${r.f || '–'}</td><td class="n">${r.u || '–'}</td></tr>`;
+    if (ui.detail === s.id) h += `<tr class="detail"><td colspan="4">${r.list.length ? '<ul>' + r.list.map(x => `<li>${wd(x.d)} ${fmt(x.d)} · ${esc(x.sj)} · ${x.v === 'f' ? 'fehlt' : 'unvollständig'}</li>`).join('') + '</ul>' : 'Keine Einträge im Zeitraum.'}</td></tr>`;
+  });
+  h += `</tbody></table>
+  <div class="actions" style="justify-content:flex-start;margin-top:14px">
+    <button class="btn" data-act="csvOverview">Übersicht als CSV</button>
+    <button class="btn" data-act="csvRaw">Alle Einträge als CSV</button>
+  </div>`;
+  main.innerHTML = h;
+}
+
+/* ---------- Klasse verwalten ---------- */
+function renderVerwalten(c) {
+  main.innerHTML = `
+  <h2 style="margin-top:4px">Klasse</h2>
+  <div class="field"><label>Klassenname</label><input id="vName" value="${esc(c.name)}"></div>
+  <div class="field"><label>Fächer (mit Komma getrennt)</label><input id="vSubj" value="${esc(c.subjects.join(', '))}"></div>
+  <button class="btn primary" data-act="saveMeta">Speichern</button>
+
+  <h2>Schüler (${c.students.length})</h2>
+  ${c.students.length ? `<div class="list">${c.students.map(s => `<div class="li"><span>${esc(s.name)}</span><button class="iconbtn" data-act="renStu" data-sid="${s.id}" aria-label="Umbenennen">✎</button><button class="iconbtn" data-act="delStu" data-sid="${s.id}" aria-label="Entfernen">✕</button></div>`).join('')}</div>` : '<p class="muted">Noch keine Schüler.</p>'}
+
+  <h2>Schüler hinzufügen</h2>
+  <p class="hint">Ein Name pro Zeile. Du kannst auch eine Liste aus Excel, WebUntis oder IServ einfügen („Nachname;Vorname“ oder durch Tab getrennt).</p>
+  <textarea id="vAdd" placeholder="Müller, Anna&#10;Schmidt, Ben"></textarea>
+  <div class="actions" style="justify-content:flex-start"><button class="btn primary" data-act="addStu">Hinzufügen</button></div>
+
+  <h2>Klasse löschen</h2>
+  <p class="hint">Löscht die Klasse mit allen Einträgen auf diesem Gerät.</p>
+  <button class="btn danger" data-act="delClass">Klasse ${esc(c.name)} löschen</button>`;
+}
+function parseNames(t) {
+  return t.split(/\r?\n/).map(l => l.trim()).filter(Boolean).map(l => {
+    if (/[;\t]/.test(l)) {
+      const p = l.split(/[;\t]/).map(x => x.trim().replace(/^"|"$/g, '')).filter(Boolean);
+      return p.length >= 2 ? p[0] + ', ' + p[1] : (p[0] || '');
+    }
+    return l.replace(/^"|"$/g, '');
+  }).filter(n => n && !/^(nach)?name\b/i.test(n));
+}
+function addStudents(c, text) {
+  const have = new Set(c.students.map(s => s.name.toLowerCase()));
+  let n = 0;
+  parseNames(text).forEach(name => { if (!have.has(name.toLowerCase())) { c.students.push({ id: uid(), name }); have.add(name.toLowerCase()); n++; } });
+  c.students.sort(byName);
+  return n;
+}
+const parseSubjects = t => [...new Set(t.split(',').map(s => s.trim().replace(/\|/g, '/')).filter(Boolean))];
+
+/* ---------- Dateien ---------- */
+async function shareOrDownload(name, text, mime) {
+  const blob = new Blob([text], { type: mime });
+  try {
+    const file = new File([blob], name, { type: mime });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: name }); return true; }
+  } catch (e) { if (e && e.name === 'AbortError') return false; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+  return true;
+}
+const csvCell = v => { v = String(v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
+const csv = rows => '\ufeff' + rows.map(r => r.map(csvCell).join(';')).join('\r\n');
+const safe = s => String(s).replace(/[^\wäöüÄÖÜß-]+/g, '_');
+async function backup() {
+  const ok = await shareOrDownload(`HA-Liste_Backup_${today()}.json`, JSON.stringify({ app: 'ha-liste', exported: new Date().toISOString(), data: S }), 'application/json');
+  if (ok) { S.lastBackup = Date.now(); save(); toast('Sicherung erstellt'); render(); }
+}
+
+/* ---------- Dialoge ---------- */
+function modal(html, bind) { const d = $('#dlg'); d.innerHTML = html; d.querySelectorAll('[data-close]').forEach(b => b.onclick = () => d.close()); bind && bind(d); d.showModal(); }
+function classDialog() {
+  modal(`<h3>Neue Klasse</h3>
+    <div class="field"><label>Klassenname</label><input id="nName" placeholder="z. B. 9b"></div>
+    <div class="field"><label>Fächer (mit Komma getrennt)</label><input id="nSubj" value="Mathe"></div>
+    <div class="field"><label>Schüler (ein Name pro Zeile, optional)</label><textarea id="nStu" placeholder="Müller, Anna&#10;Schmidt, Ben"></textarea></div>
+    <div class="actions"><button class="btn" data-close>Abbrechen</button><button class="btn primary" id="nOk">Anlegen</button></div>`, d => {
+    d.querySelector('#nOk').onclick = () => {
+      const name = d.querySelector('#nName').value.trim();
+      if (!name) { d.querySelector('#nName').focus(); return; }
+      const c = { id: uid(), name, subjects: parseSubjects(d.querySelector('#nSubj').value), students: [], lastSubj: null };
+      if (!c.subjects.length) c.subjects = ['Mathe'];
+      addStudents(c, d.querySelector('#nStu').value);
+      S.classes.push(c); save(); d.close();
+      Object.assign(ui, { screen: 'class', cid: c.id, tab: c.students.length ? 'erfassen' : 'verwalten', date: today(), subj: null, detail: null });
+      render(); scrollTo(0, 0);
+    };
+  });
+}
+function settingsDialog() {
+  const s = S.settings;
+  modal(`<h3>Einstellungen</h3>
+    <div class="field"><label>Ampel gelb ab … Punkten</label><input id="sG" type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.gelb}"></div>
+    <div class="field"><label>Ampel rot ab … Punkten</label><input id="sR" type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.rot}"></div>
+    <div class="field"><label>„Unvollständig“ zählt als</label><select id="sH">${[[0, '0 Punkte'], [0.5, '0,5 Punkte'], [1, '1 Punkt']].map(([v, l]) => `<option value="${v}" ${v == s.halb ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    <div class="actions"><button class="btn primary" id="sOk">Übernehmen</button></div>
+    <h3 style="margin-top:22px">Datensicherung</h3>
+    <p class="muted">Alle Daten liegen nur auf diesem Gerät. Wird die App vom Home-Bildschirm gelöscht, sind auch die Daten weg. Sichere regelmäßig, z. B. in „Dateien“ oder per AirDrop. Letzte Sicherung: ${S.lastBackup ? new Date(S.lastBackup).toLocaleDateString('de-DE') : 'noch nie'}.</p>
+    <div class="actions" style="justify-content:flex-start"><button class="btn" id="sB">Sicherung exportieren</button><button class="btn" id="sI">Sicherung importieren</button></div>
+    <div class="actions"><button class="btn" data-close>Schließen</button></div>`, d => {
+    d.querySelector('#sOk').onclick = () => {
+      const g = parseFloat(d.querySelector('#sG').value), r = parseFloat(d.querySelector('#sR').value);
+      if (!(g > 0) || !(r >= g)) { toast('Rot muss ≥ Gelb sein'); return; }
+      S.settings = { gelb: g, rot: r, halb: parseFloat(d.querySelector('#sH').value) }; save(); toast('Gespeichert'); render();
+    };
+    d.querySelector('#sB').onclick = () => backup();
+    d.querySelector('#sI').onclick = () => $('#importFile').click();
+  });
+}
+$('#importFile').addEventListener('change', e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const j = JSON.parse(rd.result); const n = normalize(j.data || j);
+      if (!n) throw 0;
+      if (!confirm(`Sicherung mit ${n.classes.length} Klasse(n) importieren? Die aktuellen Daten auf diesem Gerät werden ersetzt.`)) return;
+      S = n; save(); $('#dlg').open && $('#dlg').close();
+      ui.screen = 'home'; render(); toast('Sicherung importiert');
+    } catch (err) { alert('Diese Datei ist keine gültige HA-Liste-Sicherung.'); }
+  };
+  rd.readAsText(f);
+});
+
+/* ---------- Aktionen ---------- */
+const acts = {
+  openClass(b) { Object.assign(ui, { screen: 'class', cid: b.dataset.cid, tab: 'erfassen', date: today(), subj: null, detail: null }); render(); scrollTo(0, 0); },
+  addClass: () => classDialog(),
+  backup: () => backup(),
+  tab(b) { ui.tab = b.dataset.tab; render(); scrollTo(0, 0); },
+  day(b) { ui.date = shiftDay(ui.date, +b.dataset.d); render(); },
+  toggle(b) {
+    const c = cls(), subj = curSubj(c), k = ui.date + '|' + subj;
+    const E = S.entries[c.id] || (S.entries[c.id] = {});
+    const day = E[k] || (E[k] = {});
+    const sid = b.dataset.sid;
+    const nxt = { '': 'f', f: 'u', u: '' }[day[sid] || ''];
+    if (nxt) day[sid] = nxt; else delete day[sid];
+    if (!Object.keys(day).length) delete E[k];
+    save(); render();
+  },
+  detail(b) { ui.detail = ui.detail === b.dataset.sid ? null : b.dataset.sid; render(); },
+  csvOverview() {
+    const c = cls(), from = rangeFrom(ui.ovRange), st = stats(c, ui.ovSubj, from);
+    const rows = [['Klasse', 'Name', 'Fach', 'Zeitraum ab', 'fehlt', 'unvollständig', 'Punkte', 'Ampel']];
+    c.students.slice().sort(byName).forEach(s => { const r = st[s.id]; rows.push([c.name, s.name, ui.ovSubj === '*' ? 'alle' : ui.ovSubj, from ? fmt(from) : 'gesamt', r.f, r.u, String(r.p).replace('.', ','), { g: 'grün', y: 'gelb', r: 'rot' }[ampel(r.p)]]); });
+    shareOrDownload(`HA_${safe(c.name)}_Uebersicht_${today()}.csv`, csv(rows), 'text/csv');
+  },
+  csvRaw() {
+    const c = cls(), E = S.entries[c.id] || {}, names = Object.fromEntries(c.students.map(s => [s.id, s.name]));
+    const rows = [];
+    for (const k in E) for (const sid in E[k]) if (names[sid]) rows.push([k.slice(0, 10), k.slice(11), names[sid], E[k][sid]]);
+    rows.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]) || a[2].localeCompare(b[2], 'de'));
+    shareOrDownload(`HA_${safe(c.name)}_Eintraege_${today()}.csv`, csv([['Datum', 'Fach', 'Name', 'Status'], ...rows.map(r => [fmt(r[0]), r[1], r[2], r[3] === 'f' ? 'fehlt' : 'unvollständig'])]), 'text/csv');
+  },
+  saveMeta() {
+    const c = cls(), name = $('#vName').value.trim(), subs = parseSubjects($('#vSubj').value);
+    if (!name || !subs.length) { toast('Name und mind. ein Fach angeben'); return; }
+    const removed = c.subjects.filter(s => !subs.includes(s));
+    const E = S.entries[c.id] || {};
+    const lost = removed.filter(s => Object.keys(E).some(k => k.slice(11) === s));
+    if (lost.length && !confirm(`Für ${lost.join(', ')} gibt es Einträge. Sie bleiben gespeichert, werden aber nicht mehr angezeigt, solange das Fach fehlt. Fortfahren?`)) return;
+    c.name = name; c.subjects = subs; save(); toast('Gespeichert'); render();
+  },
+  addStu() { const c = cls(), n = addStudents(c, $('#vAdd').value); save(); toast(n ? `${n} Schüler hinzugefügt` : 'Keine neuen Namen'); render(); },
+  renStu(b) {
+    const c = cls(), s = c.students.find(x => x.id === b.dataset.sid);
+    const n = prompt('Name ändern:', s.name);
+    if (n && n.trim()) { s.name = n.trim(); c.students.sort(byName); save(); render(); }
+  },
+  delStu(b) {
+    const c = cls(), s = c.students.find(x => x.id === b.dataset.sid);
+    if (!confirm(`${s.name} mit allen Einträgen entfernen?`)) return;
+    c.students = c.students.filter(x => x.id !== s.id);
+    const E = S.entries[c.id] || {};
+    for (const k in E) { delete E[k][s.id]; if (!Object.keys(E[k]).length) delete E[k]; }
+    save(); render();
+  },
+  delClass() {
+    const c = cls();
+    if (!confirm(`Klasse ${c.name} mit allen Einträgen endgültig löschen?`)) return;
+    S.classes = S.classes.filter(x => x.id !== c.id); delete S.entries[c.id];
+    save(); ui.screen = 'home'; render();
+  }
+};
+const chg = {
+  date(t) { ui.date = t.value || today(); render(); },
+  subj(t) {
+    const c = cls();
+    if (t.value === '__new') {
+      const n = prompt('Neues Fach:');
+      const s = n && parseSubjects(n)[0];
+      if (s && !c.subjects.includes(s)) c.subjects.push(s);
+      if (s) { ui.subj = s; c.lastSubj = s; }
+      save(); render(); return;
+    }
+    ui.subj = t.value; c.lastSubj = t.value; save(); render();
+  },
+  ovSubj(t) { ui.ovSubj = t.value; ui.detail = null; render(); },
+  ovRange(t) { ui.ovRange = t.value; render(); }
+};
+main.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && acts[b.dataset.act]) acts[b.dataset.act](b, e); });
+main.addEventListener('change', e => { const t = e.target; if (t.dataset.chg && chg[t.dataset.chg]) chg[t.dataset.chg](t); });
+$('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) acts.tab(b); });
+$('#back').onclick = () => { ui.screen = 'home'; render(); scrollTo(0, 0); };
+$('#menu').onclick = settingsDialog;
+window.addEventListener('storage', e => { if (e.key === KEY) { S = load(); render(); } });
+
+render();
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
+</script>
+</body>
+</html>
