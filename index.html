@@ -62,6 +62,15 @@ textarea{width:100%;min-height:150px}
 .stu .tot{position:absolute;top:8px;right:9px;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
 .stu.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 13%,var(--card))}
 .summary{margin:14px 0 0;color:var(--mute);font-size:14px}
+.stu.bt{cursor:default}
+.stars{display:flex;width:100%;margin:-2px 0}
+.star{flex:1;min-width:0;border:0;background:none;font-size:26px;line-height:1;padding:4px 0;color:var(--line);cursor:pointer}
+.star.on{color:#f0a800}
+.seats .star{font-size:20px}
+.nivbtn{flex:none;min-width:52px;min-height:36px;border-radius:8px;border:1px solid var(--line);background:var(--card);color:var(--mute);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.nivbtn.own{border-color:var(--pri);color:var(--pri)}
+.keytab input{width:90px;min-height:40px;text-align:center}
+.keytab td,.keytab th{padding:6px 8px}
 /* Sitzplan */
 .scrollx{overflow-x:auto;padding-bottom:4px}
 .seats{display:grid;grid-template-columns:repeat(var(--cols),minmax(96px,1fr));gap:8px}
@@ -154,7 +163,10 @@ function defaultCats(halb) {
     { id: 'u', name: 'HA unvollständig', color: COLORS[1], w: halb ?? 0.5, grp: 'ha' }
   ];
 }
-function fresh() { return { v: 2, settings: { gelb: 2, rot: 3 }, cats: defaultCats(), classes: [], entries: {}, lastBackup: null }; }
+const NIV = { msa: 'MSA', ue: 'Ü' };
+// Mindest-Durchschnitt (Sterne 1–5) für die Noten 1–5, darunter 6
+const defaultScales = () => ({ msa: [4.5, 3.8, 3.0, 2.2, 1.5], ue: [4.7, 4.2, 3.5, 2.7, 1.8] });
+function fresh() { return { v: 3, settings: { gelb: 2, rot: 3 }, scales: defaultScales(), cats: defaultCats(), classes: [], entries: {}, beitr: {}, lastBackup: null }; }
 function normalize(s) {
   if (!s || !Array.isArray(s.classes)) return null;
   const n = fresh();
@@ -163,8 +175,19 @@ function normalize(s) {
   n.cats = (Array.isArray(s.cats) && s.cats.length)
     ? s.cats.map(k => ({ id: String(k.id || uid()), name: String(k.name || 'Kategorie'), color: k.color || COLORS[2], w: +k.w || 0, grp: k.grp || k.id }))
     : defaultCats(s.settings && s.settings.halb !== undefined ? +s.settings.halb : 0.5);
+  const sc = s.scales || {};
+  ['msa', 'ue'].forEach(k => { if (Array.isArray(sc[k]) && sc[k].length === 5) n.scales[k] = sc[k].map(Number); });
+  const B = s.beitr || {};
+  for (const cid in B) {
+    n.beitr[cid] = {};
+    for (const k in B[cid]) {
+      const day = {};
+      for (const sid in B[cid][k]) { const v = +B[cid][k][sid]; if (v >= 1 && v <= 5) day[sid] = v; }
+      if (Object.keys(day).length) n.beitr[cid][k] = day;
+    }
+  }
   n.classes = s.classes.map(c => {
-    const students = (c.students || []).map(st => ({ id: st.id || uid(), name: String(st.name) }));
+    const students = (c.students || []).map(st => { const o = { id: st.id || uid(), name: String(st.name) }; if (NIV[st.niv]) o.niv = st.niv; return o; });
     const ids = new Set(students.map(x => x.id));
     const se = c.seats || {};
     const map = {};
@@ -172,7 +195,7 @@ function normalize(s) {
     return {
       id: c.id || uid(), name: String(c.name || 'Klasse'),
       subjects: (c.subjects && c.subjects.length) ? c.subjects.map(String) : ['Mathe'],
-      lastSubj: c.lastSubj || null, students, view: c.view === 'seat' ? 'seat' : 'list',
+      lastSubj: c.lastSubj || null, students, view: c.view === 'seat' ? 'seat' : 'list', niveau: NIV[c.niveau] ? c.niveau : 'msa',
       seats: { rows: +se.rows || 5, cols: +se.cols || 6, flip: !!se.flip, map }
     };
   });
@@ -205,9 +228,13 @@ save();
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
 
 /* ---------- UI-Zustand ---------- */
-let ui = { screen: 'home', cid: null, tab: 'erfassen', date: today(), subj: null, cat: null, ovSubj: '*', ovRange: 'hj', ovCat: '*', detail: null, pick: null };
+let ui = { screen: 'home', cid: null, tab: 'erfassen', date: today(), subj: null, cat: null, ovSubj: '*', ovRange: 'hj', ovCat: '*', ovMode: 'cat', detail: null, pick: null };
 const cls = () => S.classes.find(c => c.id === ui.cid);
 const catById = id => S.cats.find(k => k.id === id);
+const effNiv = (c, s) => s.niv || c.niveau;
+function grade(avg, niv) { const t = S.scales[niv]; for (let i = 0; i < 5; i++) if (avg >= t[i] - 1e-9) return i + 1; return 6; }
+const avgFmt = x => num(Math.round(x * 10) / 10);
+const starStr = n => '★'.repeat(n) + '☆'.repeat(5 - n);
 function curSubj(c) { let s = ui.subj || c.lastSubj; if (!c.subjects.includes(s)) s = c.subjects[0]; return s; }
 function curCat() { return catById(ui.cat) || S.cats[0]; }
 
@@ -277,10 +304,34 @@ function tile(st, day, cat, tot, seat) {
   const tags = arr.map(catById).filter(Boolean).map(k => `<span class="pill" style="--c:${k.color}">${esc(k.name)}</span>`).join('');
   return `<button class="stu ${on ? 'on' : ''}" style="--c:${cat.color}" data-act="toggle" data-sid="${st.id}"><span class="sn">${esc(seat ? shortName(st.name) : st.name)}</span><span class="tags">${tags}</span>${tot[st.id] ? `<span class="tot">${tot[st.id]}</span>` : ''}</button>`;
 }
+function btile(st, dayB, day, avgs, seat) {
+  const v = dayB[st.id] || 0;
+  const tags = (day[st.id] || []).map(catById).filter(Boolean).map(k => `<span class="pill" style="--c:${k.color}">${esc(k.name)}</span>`).join('');
+  return `<div class="stu bt ${v ? 'on' : ''}" style="--c:var(--pri)"><span class="sn">${esc(seat ? shortName(st.name) : st.name)}</span>`
+    + `<span class="stars">${[1, 2, 3, 4, 5].map(n => `<button class="star ${n <= v ? 'on' : ''}" data-act="star" data-sid="${st.id}" data-n="${n}" aria-label="${n} Sterne">★</button>`).join('')}</span>`
+    + (tags ? `<span class="tags">${tags}</span>` : '') + (avgs[st.id] ? `<span class="tot">Ø ${avgs[st.id]}</span>` : '') + `</div>`;
+}
+function bstats(c, subj, from) {
+  const res = {};
+  c.students.forEach(s => res[s.id] = { sum: 0, n: 0, list: [] });
+  const B = S.beitr[c.id] || {};
+  for (const k in B) {
+    const d = k.slice(0, 10), sj = k.slice(11);
+    if (subj !== '*' && sj !== subj) continue;
+    if (from && d < from) continue;
+    for (const sid in B[k]) { const r = res[sid]; if (!r) continue; r.sum += B[k][sid]; r.n++; r.list.push({ d, sj, v: B[k][sid] }); }
+  }
+  for (const sid in res) { const r = res[sid]; r.avg = r.n ? r.sum / r.n : null; r.list.sort((a, b) => b.d.localeCompare(a.d)); }
+  return res;
+}
 function renderErfassen(c) {
-  const subj = curSubj(c), cat = curCat();
+  const subj = curSubj(c), bMode = ui.cat === '__b', cat = bMode ? null : curCat();
   const day = ((S.entries[c.id] || {})[ui.date + '|' + subj]) || {};
-  const tot = totalsFor(c, subj, cat.id);
+  const dayB = ((S.beitr[c.id] || {})[ui.date + '|' + subj]) || {};
+  const tot = bMode ? {} : totalsFor(c, subj, cat.id);
+  const avgs = {};
+  if (bMode) { const bs = bstats(c, subj, rangeFrom('hj')); for (const sid in bs) if (bs[sid].n) avgs[sid] = avgFmt(bs[sid].avg); }
+  const T = (st, seat) => bMode ? btile(st, dayB, day, avgs, seat) : tile(st, day, cat, tot, seat);
   const seatMode = c.view === 'seat';
   let h = `<div class="ctrl">
     <button class="iconbtn sm" data-act="day" data-d="-1" aria-label="Vorheriger Schultag">‹</button>
@@ -290,10 +341,12 @@ function renderErfassen(c) {
     <select class="grow" data-chg="subj">${c.subjects.map(s => `<option ${s === subj ? 'selected' : ''}>${esc(s)}</option>`).join('')}<option value="__new">+ Fach hinzufügen…</option></select>
   </div>
   <div class="ctrl" style="flex-wrap:nowrap">
-    <div class="chips">${S.cats.map(k => `<button class="chip ${k.id === cat.id ? 'on' : ''}" style="--c:${k.color}" data-act="cat" data-id="${k.id}">${esc(k.name)}</button>`).join('')}</div>
+    <div class="chips"><button class="chip ${bMode ? 'on' : ''}" style="--c:var(--pri)" data-act="cat" data-id="__b">★ Beiträge</button>${S.cats.map(k => `<button class="chip ${!bMode && k.id === cat.id ? 'on' : ''}" style="--c:${k.color}" data-act="cat" data-id="${k.id}">${esc(k.name)}</button>`).join('')}</div>
     <div class="seg"><button class="${seatMode ? '' : 'on'}" data-act="view" data-v="list">Liste</button><button class="${seatMode ? 'on' : ''}" data-act="view" data-v="seat">Sitzplan</button></div>
   </div>
-  <p class="hint">Kategorie oben wählen, dann Schüler antippen – nochmal tippen entfernt. Zahl oben rechts = „${esc(cat.name)}“ gesamt in ${esc(subj)}.</p>`;
+  <p class="hint">${bMode
+      ? `Sterne antippen: 1 = kaum Beitrag … 5 = sehr starker Beitrag. Denselben Stern nochmal tippen löscht. Ø oben rechts = dieses Halbjahr in ${esc(subj)}.`
+      : `Kategorie oben wählen, dann Schüler antippen – nochmal tippen entfernt. Zahl oben rechts = „${esc(cat.name)}“ gesamt in ${esc(subj)}.`}</p>`;
   if (!c.students.length) {
     h += `<div class="empty">Noch keine Schüler in dieser Klasse.<br><br><button class="btn primary" data-act="tab" data-tab="verwalten">Schüler eintragen</button></div>`;
     main.innerHTML = h; return;
@@ -304,17 +357,23 @@ function renderErfassen(c) {
       h += `<div class="empty">Für diese Klasse gibt es noch keinen Sitzplan.<br><br><button class="btn primary" data-act="tab" data-tab="verwalten">Sitzplan anlegen</button></div>`;
     } else {
       const byId = Object.fromEntries(c.students.map(s => [s.id, s]));
-      h += seatGrid(c, (k, sid) => sid && byId[sid] ? tile(byId[sid], day, cat, tot, true) : `<div class="seat-empty"></div>`);
+      h += seatGrid(c, (k, sid) => sid && byId[sid] ? T(byId[sid], true) : `<div class="seat-empty"></div>`);
       const rest = c.students.filter(s => !seated.has(s.id));
-      if (rest.length) h += `<h2>Ohne Sitzplatz</h2><div class="grid">${rest.map(s => tile(s, day, cat, tot, false)).join('')}</div>`;
+      if (rest.length) h += `<h2>Ohne Sitzplatz</h2><div class="grid">${rest.map(s => T(s, false)).join('')}</div>`;
     }
   } else {
-    h += `<div class="grid">${c.students.map(s => tile(s, day, cat, tot, false)).join('')}</div>`;
+    h += `<div class="grid">${c.students.map(s => T(s, false)).join('')}</div>`;
   }
-  const cnt = {};
-  Object.values(day).forEach(a => a.forEach(id => cnt[id] = (cnt[id] || 0) + 1));
-  const parts = S.cats.filter(k => cnt[k.id]).map(k => `${esc(k.name)}: ${cnt[k.id]}`);
-  h += `<p class="summary">${fmt(ui.date)} · ${esc(subj)}: ${parts.length ? parts.join(' · ') : 'keine Einträge'}. Wird automatisch gespeichert.</p>`;
+  if (bMode) {
+    const vals = Object.values(dayB), open = c.students.filter(s => !dayB[s.id]).length;
+    if (open) h += `<div class="ctrl" style="margin-top:14px"><span class="muted">Allen ${open} ohne Wertung geben:</span>${[1, 2, 3, 4, 5].map(n => `<button class="btn small" data-act="fillRest" data-n="${n}">${n} ★</button>`).join('')}</div>`;
+    h += `<p class="summary">${fmt(ui.date)} · ${esc(subj)}: ${vals.length} bewertet${vals.length ? ', Ø ' + avgFmt(vals.reduce((a, b) => a + b, 0) / vals.length) + ' ★' : ''}. Wird automatisch gespeichert.</p>`;
+  } else {
+    const cnt = {};
+    Object.values(day).forEach(a => a.forEach(id => cnt[id] = (cnt[id] || 0) + 1));
+    const parts = S.cats.filter(k => cnt[k.id]).map(k => `${esc(k.name)}: ${cnt[k.id]}`);
+    h += `<p class="summary">${fmt(ui.date)} · ${esc(subj)}: ${parts.length ? parts.join(' · ') : 'keine Einträge'}. Wird automatisch gespeichert.</p>`;
+  }
   main.innerHTML = h;
 }
 function shiftDay(iso, delta) {
@@ -350,14 +409,35 @@ function stats(c, subj, from, cats) {
   return res;
 }
 const ampel = p => p >= S.settings.rot ? 'r' : p >= S.settings.gelb ? 'y' : 'g';
+const rangeOpts = () => [['hj', 'Dieses Halbjahr'], ['sj', 'Dieses Schuljahr'], ['4w', 'Letzte 4 Wochen'], ['all', 'Gesamt']].map(([v, l]) => `<option value="${v}" ${v === ui.ovRange ? 'selected' : ''}>${l}</option>`).join('');
+const modeSeg = () => `<div class="seg" style="margin-bottom:12px"><button class="${ui.ovMode === 'cat' ? 'on' : ''}" data-act="ovMode" data-m="cat">Erfassungen</button><button class="${ui.ovMode === 'b' ? 'on' : ''}" data-act="ovMode" data-m="b">★ Beiträge &amp; Noten</button></div>`;
+function renderBeitraege(c) {
+  const from = rangeFrom(ui.ovRange), st = bstats(c, ui.ovSubj, from);
+  let h = modeSeg() + `<div class="ctrl">
+    <select class="grow" data-chg="ovSubj"><option value="*">Alle Fächer</option>${c.subjects.map(s => `<option ${s === ui.ovSubj ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+    <select class="grow" data-chg="ovRange">${rangeOpts()}</select>
+  </div>
+  <p class="hint">${from ? 'Seit ' + fmt(from) : 'Alle Einträge'} · Note aus dem Sterne-Durchschnitt nach dem Notenschlüssel unter ⚙︎. Niveau je Schüler im Reiter „Klasse“. Zeile antippen für Details.</p>`;
+  if (!c.students.length) { main.innerHTML = h + `<div class="empty">Keine Schüler.</div>`; return; }
+  h += `<div class="tablewrap"><table><thead><tr><th>Name</th><th class="n">Niveau</th><th class="n">Anz.</th><th class="n">Ø ★</th><th class="n">Note</th></tr></thead><tbody>`;
+  c.students.forEach(s => {
+    const r = st[s.id], niv = effNiv(c, s);
+    h += `<tr class="row" data-act="detail" data-sid="${s.id}"><td>${esc(s.name)}</td><td class="n">${NIV[niv]}</td><td class="n">${r.n || '–'}</td><td class="n">${r.n ? avgFmt(r.avg) : '–'}</td><td class="n"><b>${r.n ? grade(r.avg, niv) : '–'}</b></td></tr>`;
+    if (ui.detail === s.id) h += `<tr class="detail"><td colspan="5">${r.list.length ? '<ul>' + r.list.map(x => `<li>${wd(x.d)} ${fmt(x.d)} · ${esc(x.sj)} · <span style="color:#f0a800">${starStr(x.v)}</span></li>`).join('') + '</ul>' : 'Keine Bewertungen im Zeitraum.'}</td></tr>`;
+  });
+  h += `</tbody></table></div>
+  <div class="actions" style="justify-content:flex-start;margin-top:14px"><button class="btn" data-act="csvBeitr">Noten als CSV</button></div>`;
+  main.innerHTML = h;
+}
 function renderUebersicht(c) {
   if (ui.ovSubj !== '*' && !c.subjects.includes(ui.ovSubj)) ui.ovSubj = '*';
+  if (ui.ovMode === 'b') { renderBeitraege(c); return; }
   if (ui.ovCat !== '*' && !catById(ui.ovCat)) ui.ovCat = '*';
   const from = rangeFrom(ui.ovRange), cats = shownCats();
   const st = stats(c, ui.ovSubj, from, cats);
   const rows = c.students.slice().sort((a, b) => (st[b.id].p - st[a.id].p) || byName(a, b));
   const nr = rows.filter(s => ampel(st[s.id].p) === 'r').length, ny = rows.filter(s => ampel(st[s.id].p) === 'y').length;
-  let h = `<div class="ctrl">
+  let h = modeSeg() + `<div class="ctrl">
     <select class="grow" data-chg="ovSubj"><option value="*">Alle Fächer</option>${c.subjects.map(s => `<option ${s === ui.ovSubj ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
     <select class="grow" data-chg="ovCat"><option value="*">Alle Kategorien</option>${S.cats.map(k => `<option value="${k.id}" ${k.id === ui.ovCat ? 'selected' : ''}>${esc(k.name)}</option>`).join('')}</select>
     <select class="grow" data-chg="ovRange">
@@ -409,8 +489,12 @@ function renderVerwalten(c) {
     ${seated.size ? '<button class="btn danger" data-act="seatClear">Sitzplan leeren</button>' : ''}
   </div>
 
+  <h2>Notenniveau</h2>
+  <div class="ctrl"><label class="muted">Standard für die Klasse</label><select data-chg="classNiv">${Object.entries(NIV).map(([k, l]) => `<option value="${k}" ${k === c.niveau ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+  <p class="hint">Für einzelne Schüler mit anderem Niveau in der Liste unten auf MSA/Ü tippen (blau = abweichend).</p>
+
   <h2>Schüler (${c.students.length})</h2>
-  ${c.students.length ? `<div class="list">${c.students.map(s => `<div class="li"><span>${esc(s.name)}</span><button class="iconbtn" data-act="renStu" data-sid="${s.id}" aria-label="Umbenennen">✎</button><button class="iconbtn" data-act="delStu" data-sid="${s.id}" aria-label="Entfernen">✕</button></div>`).join('')}</div>` : '<p class="muted">Noch keine Schüler.</p>'}
+  ${c.students.length ? `<div class="list">${c.students.map(s => `<div class="li"><span>${esc(s.name)}</span><button class="nivbtn ${s.niv ? 'own' : ''}" data-act="niv" data-sid="${s.id}" aria-label="Niveau wechseln">${NIV[effNiv(c, s)]}</button><button class="iconbtn" data-act="renStu" data-sid="${s.id}" aria-label="Umbenennen">✎</button><button class="iconbtn" data-act="delStu" data-sid="${s.id}" aria-label="Entfernen">✕</button></div>`).join('')}</div>` : '<p class="muted">Noch keine Schüler.</p>'}
 
   <h2>Schüler hinzufügen</h2>
   <p class="hint">Ein Name pro Zeile. Du kannst auch eine Liste aus Excel, WebUntis oder IServ einfügen („Nachname;Vorname“ oder durch Tab getrennt).</p>
@@ -478,7 +562,7 @@ function classDialog() {
     d.querySelector('#nOk').onclick = () => {
       const name = d.querySelector('#nName').value.trim();
       if (!name) { d.querySelector('#nName').focus(); return; }
-      const c = { id: uid(), name, subjects: parseSubjects(d.querySelector('#nSubj').value), students: [], lastSubj: null, view: 'list', seats: { rows: 5, cols: 6, flip: false, map: {} } };
+      const c = { id: uid(), name, subjects: parseSubjects(d.querySelector('#nSubj').value), students: [], lastSubj: null, view: 'list', niveau: 'msa', seats: { rows: 5, cols: 6, flip: false, map: {} } };
       if (!c.subjects.length) c.subjects = ['Mathe'];
       addStudents(c, d.querySelector('#nStu').value);
       S.classes.push(c); save();
@@ -513,6 +597,13 @@ function renderSettings() {
       <div class="field"><label>Gelb ab … Punkten</label><input type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.gelb}" data-dchg="gelb"></div>
       <div class="field"><label>Rot ab … Punkten</label><input type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.rot}" data-dchg="rot"></div>
     </div>
+    <h4>Notenschlüssel Unterrichtsbeiträge</h4>
+    <p class="muted" style="margin:0 0 8px">Ab welchem Sterne-Durchschnitt (1–5) gibt es welche Note? Werte gehen von Note 1 nach unten.</p>
+    <table class="keytab"><thead><tr><th>Note</th>${Object.values(NIV).map(l => `<th class="n">${l} ab Ø</th>`).join('')}</tr></thead><tbody>
+      ${[0, 1, 2, 3, 4].map(i => `<tr><td><b>${i + 1}</b></td>${Object.keys(NIV).map(sys => `<td class="n"><input type="number" inputmode="decimal" min="1" max="5" step="0.1" value="${S.scales[sys][i]}" data-dchg="scale" data-sys="${sys}" data-g="${i}" aria-label="${NIV[sys]} Note ${i + 1}"></td>`).join('')}</tr>`).join('')}
+      <tr><td><b>6</b></td><td class="n muted" colspan="2">darunter</td></tr>
+    </tbody></table>
+    <div class="actions" style="justify-content:flex-start"><button class="btn small" data-dact="resetScale">Vorschlag wiederherstellen</button></div>
     <h4>Datensicherung</h4>
     <p class="muted" style="margin-top:0">Alle Daten liegen nur auf diesem Gerät. Wird die App vom Home-Bildschirm gelöscht, sind auch die Daten weg. Letzte Sicherung: ${S.lastBackup ? new Date(S.lastBackup).toLocaleDateString('de-DE') : 'noch nie'}.</p>
     <div class="actions" style="justify-content:flex-start"><button class="btn" data-dact="backup">Sicherung exportieren</button><button class="btn" data-dact="import">Sicherung importieren</button></div>
@@ -545,6 +636,7 @@ dlg.addEventListener('click', e => {
       S.cats.push({ id, name, color: COLORS.find(c => !used.has(c)) || COLORS[S.cats.length % COLORS.length], w: 1, grp: id });
       break;
     }
+    case 'resetScale': if (!confirm('Notenschlüssel auf den Vorschlag zurücksetzen?')) return; S.scales = defaultScales(); break;
     case 'backup': backup(); return;
     case 'import': $('#importFile').click(); return;
   }
@@ -553,6 +645,11 @@ dlg.addEventListener('click', e => {
 dlg.addEventListener('change', e => {
   const t = e.target, f = t.dataset.dchg; if (!f) return;
   const k = S.cats[+t.dataset.i];
+  if (f === 'scale') {
+    const t2 = S.scales[t.dataset.sys], i = +t.dataset.g, v = Math.round(parseFloat(String(t.value).replace(',', '.')) * 100) / 100;
+    if (!(v >= 1 && v <= 5) || (i > 0 && v > t2[i - 1]) || (i < 4 && v < t2[i + 1])) { toast('Wert muss zwischen den Nachbarnoten liegen (1–5)'); t.value = t2[i]; return; }
+    t2[i] = v; save(); toast('Gespeichert'); return;
+  }
   if (f === 'name') { const v = t.value.trim(); if (v) k.name = v; else t.value = k.name; }
   else if (f === 'w') k.w = parseFloat(t.value);
   else if (f === 'gelb' || f === 'rot') {
@@ -599,6 +696,34 @@ const acts = {
     if (arr.length) day[sid] = arr; else delete day[sid];
     if (!Object.keys(day).length) delete E[k];
     save(); render();
+  },
+  star(b) {
+    const c = cls(), k = ui.date + '|' + curSubj(c), n = +b.dataset.n, sid = b.dataset.sid;
+    const B = S.beitr[c.id] || (S.beitr[c.id] = {});
+    const day = B[k] || (B[k] = {});
+    if (day[sid] === n) delete day[sid]; else day[sid] = n;
+    if (!Object.keys(day).length) delete B[k];
+    save(); render();
+  },
+  fillRest(b) {
+    const c = cls(), k = ui.date + '|' + curSubj(c), n = +b.dataset.n;
+    const B = S.beitr[c.id] || (S.beitr[c.id] = {});
+    const day = B[k] || (B[k] = {});
+    let m = 0; c.students.forEach(s => { if (!day[s.id]) { day[s.id] = n; m++; } });
+    save(); render(); toast(`${m} Schüler mit ${n} ★ bewertet`);
+  },
+  niv(b) {
+    const c = cls(), s = c.students.find(x => x.id === b.dataset.sid);
+    const next = effNiv(c, s) === 'msa' ? 'ue' : 'msa';
+    if (next === c.niveau) delete s.niv; else s.niv = next;
+    save(); render();
+  },
+  ovMode(b) { ui.ovMode = b.dataset.m; ui.detail = null; render(); },
+  csvBeitr() {
+    const c = cls(), from = rangeFrom(ui.ovRange), st = bstats(c, ui.ovSubj, from);
+    const rows = [['Klasse', 'Name', 'Niveau', 'Fach', 'Zeitraum ab', 'Anzahl Bewertungen', 'Durchschnitt Sterne', 'Note']];
+    c.students.forEach(s => { const r = st[s.id], niv = effNiv(c, s); rows.push([c.name, s.name, NIV[niv], ui.ovSubj === '*' ? 'alle' : ui.ovSubj, from ? fmt(from) : 'gesamt', r.n, r.n ? avgFmt(r.avg) : '', r.n ? grade(r.avg, niv) : '']); });
+    shareOrDownload(`Beitraege_${safe(c.name)}_${today()}.csv`, csv(rows), 'text/csv');
   },
   detail(b) { ui.detail = ui.detail === b.dataset.sid ? null : b.dataset.sid; render(); },
   pick(b) { ui.pick = ui.pick === b.dataset.sid ? null : b.dataset.sid; render(); },
@@ -657,14 +782,15 @@ const acts = {
     c.students = c.students.filter(x => x.id !== s.id);
     const k = seatKeyOf(c, s.id); if (k) delete c.seats.map[k];
     if (ui.pick === s.id) ui.pick = null;
-    const E = S.entries[c.id] || {};
-    for (const key in E) { delete E[key][s.id]; if (!Object.keys(E[key]).length) delete E[key]; }
+    [S.entries[c.id] || {}, S.beitr[c.id] || {}].forEach(E => {
+      for (const key in E) { delete E[key][s.id]; if (!Object.keys(E[key]).length) delete E[key]; }
+    });
     save(); render();
   },
   delClass() {
     const c = cls();
     if (!confirm(`Klasse ${c.name} mit allen Einträgen endgültig löschen?`)) return;
-    S.classes = S.classes.filter(x => x.id !== c.id); delete S.entries[c.id];
+    S.classes = S.classes.filter(x => x.id !== c.id); delete S.entries[c.id]; delete S.beitr[c.id];
     save(); ui.screen = 'home'; render();
   }
 };
@@ -686,6 +812,7 @@ const chg = {
   ovRange(t) { ui.ovRange = t.value; render(); },
   seatRows(t) { const c = cls(); resizeSeats(c, +t.value, c.seats.cols); },
   seatCols(t) { const c = cls(); resizeSeats(c, c.seats.rows, +t.value); },
+  classNiv(t) { const c = cls(); c.niveau = t.value; c.students.forEach(s => { if (s.niv === c.niveau) delete s.niv; }); save(); render(); },
   seatFlip(t) { cls().seats.flip = t.checked; save(); render(); }
 };
 main.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && acts[b.dataset.act]) acts[b.dataset.act](b, e); });
