@@ -1,5 +1,5 @@
 // HA-Liste – Offline-Cache. Bei Updates der App die Versionsnummer erhöhen.
-const CACHE = 'ha-liste-v1';
+const CACHE = 'ha-liste-v2';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

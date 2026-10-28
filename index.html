@@ -13,71 +13,100 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
 <style>
-:root{--bg:#f4f6f8;--card:#fff;--ink:#1c2430;--mute:#66707c;--line:#dde2e8;--pri:#1f5f8b;--pri-ink:#fff;--f:#d64545;--f-bg:#fde8e8;--u:#c98a00;--u-bg:#fff4d6;--ok:#2e8b57;--ok-bg:#e3f4ea}
-@media (prefers-color-scheme:dark){:root{--bg:#12161b;--card:#1c222a;--ink:#e8edf2;--mute:#9aa4af;--line:#2c343e;--pri:#2f74a6;--pri-ink:#fff;--f:#ff7a7a;--f-bg:#3a1f22;--u:#f0b93a;--u-bg:#3a3020;--ok:#5fcf8f;--ok-bg:#1d3327}}
+:root{--bg:#f4f6f8;--card:#fff;--ink:#1c2430;--mute:#66707c;--line:#dde2e8;--pri:#1f5f8b;--pri-ink:#fff;--warn:#c98a00;--warn-bg:#fff4d6;--bad:#d64545;--ok:#2e8b57}
+@media (prefers-color-scheme:dark){:root{--bg:#12161b;--card:#1c222a;--ink:#e8edf2;--mute:#9aa4af;--line:#2c343e;--pri:#2f74a6;--pri-ink:#fff;--warn:#f0b93a;--warn-bg:#3a3020;--bad:#ff7a7a;--ok:#5fcf8f}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 .top{position:sticky;top:0;z-index:5}
 header{display:flex;align-items:center;gap:4px;padding:calc(env(safe-area-inset-top) + 6px) 8px 6px;background:var(--pri);color:var(--pri-ink)}
 header h1{flex:1;margin:0 4px;font-size:19px;font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .iconbtn{background:none;border:0;color:inherit;font-size:26px;min-width:44px;min-height:44px;cursor:pointer;line-height:1}
+.iconbtn:disabled{opacity:.3}
 .iconbtn.sm{font-size:24px;color:var(--pri);border:1px solid var(--line);background:var(--card);border-radius:10px}
 nav{display:flex;background:var(--card);border-bottom:1px solid var(--line)}
 nav[hidden]{display:none}
 nav button{flex:1;padding:12px 4px;border:0;background:none;color:var(--mute);font-size:15px;font-weight:600;border-bottom:3px solid transparent;cursor:pointer}
 nav button.on{color:var(--pri);border-bottom-color:var(--pri)}
-main{padding:16px 16px calc(env(safe-area-inset-bottom) + 32px);max-width:1000px;margin:0 auto}
-h2{font-size:17px;margin:22px 0 10px}
+main{padding:16px 16px calc(env(safe-area-inset-bottom) + 32px);max-width:1100px;margin:0 auto}
+h2{font-size:17px;margin:24px 0 10px}
+h4{font-size:15px;margin:20px 0 6px}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;margin-bottom:16px}
 .card{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;text-align:left;color:var(--ink);cursor:pointer;font:inherit}
 .cname{font-size:24px;font-weight:700}
 .cmeta{color:var(--mute);font-size:14px}
 .btn{padding:12px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:600;cursor:pointer;min-height:44px}
 .btn.primary{background:var(--pri);color:var(--pri-ink);border-color:var(--pri)}
-.btn.danger{color:var(--f);border-color:var(--f)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
 .btn.small{padding:6px 10px;min-height:36px;font-size:14px}
 .wide{width:100%}
 .ctrl{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.ctrl .grow{flex:1;min-width:140px}
+.ctrl .grow,.grow{flex:1;min-width:0}
+.ctrl select.grow{min-width:140px}
 input,select,textarea{font:inherit;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);min-height:44px;max-width:100%}
 textarea{width:100%;min-height:150px}
 .hint{color:var(--mute);font-size:14px;margin:4px 0 12px}
-.pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:13px;font-weight:700}
-.pill.f{background:var(--f-bg);color:var(--f)}.pill.u{background:var(--u-bg);color:var(--u)}
+.muted{color:var(--mute);font-size:14px}
+/* Kategorien */
+.chips{display:flex;gap:8px;overflow-x:auto;padding:2px 0 6px;flex:1;min-width:0}
+.chip{flex:none;border:2px solid var(--c);color:var(--c);background:var(--card);border-radius:22px;padding:8px 14px;font:inherit;font-weight:650;white-space:nowrap;cursor:pointer;min-height:44px}
+.chip.on{background:var(--c);color:#fff}
+.pill{display:inline-block;padding:1px 7px;border-radius:9px;font-size:12px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent);white-space:nowrap}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.seg button{border:0;background:var(--card);color:var(--mute);font:inherit;font-size:14px;font-weight:600;padding:0 14px;min-height:44px;cursor:pointer}
+.seg button.on{background:var(--pri);color:var(--pri-ink)}
+/* Schülerkacheln */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
-.stu{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;min-height:80px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);text-align:left;font:inherit;cursor:pointer;user-select:none;-webkit-user-select:none}
-.stu .sn{font-weight:600;line-height:1.2;padding-right:28px}
-.stu .badge{font-size:13px;font-weight:700;min-height:18px}
+.stu{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:6px;min-height:80px;padding:10px 12px;border-radius:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);text-align:left;font:inherit;cursor:pointer;user-select:none;-webkit-user-select:none;width:100%}
+.stu .sn{font-weight:600;line-height:1.2;padding-right:26px;word-break:break-word}
+.stu .tags{display:flex;flex-wrap:wrap;gap:3px;min-height:18px}
 .stu .tot{position:absolute;top:8px;right:9px;font-size:12px;color:var(--mute);font-variant-numeric:tabular-nums}
-.stu.f{border-color:var(--f);background:var(--f-bg)}.stu.f .badge{color:var(--f)}
-.stu.u{border-color:var(--u);background:var(--u-bg)}.stu.u .badge{color:var(--u)}
+.stu.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 13%,var(--card))}
 .summary{margin:14px 0 0;color:var(--mute);font-size:14px}
-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+/* Sitzplan */
+.scrollx{overflow-x:auto;padding-bottom:4px}
+.seats{display:grid;grid-template-columns:repeat(var(--cols),minmax(96px,1fr));gap:8px}
+.seats .stu{min-height:70px;padding:8px 9px}
+.seats .stu .sn{font-size:15px}
+.seat-empty{min-height:70px;border-radius:12px;border:1px dashed var(--line);opacity:.5}
+.pult{text-align:center;padding:6px;border:1px dashed var(--mute);border-radius:8px;color:var(--mute);font-size:13px;margin:10px auto;max-width:260px}
+.ecell{min-height:62px;border-radius:10px;border:2px dashed var(--line);background:var(--card);color:var(--mute);font:inherit;font-size:14px;cursor:pointer;padding:6px;word-break:break-word}
+.ecell.has{border-style:solid;color:var(--ink);font-weight:600}
+.ecell.sel,.schip.sel{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 18%,var(--card));color:var(--ink)}
+.schips{display:flex;flex-wrap:wrap;gap:8px}
+.schip{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:20px;padding:6px 12px;font:inherit;font-size:14px;cursor:pointer;min-height:40px}
+/* Tabelle */
+table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line)}
+.tablewrap{overflow-x:auto;border-radius:12px}
 th,td{padding:11px 10px;border-bottom:1px solid var(--line);text-align:left}
-th{font-size:13px;color:var(--mute);font-weight:600}
-td.n,th.n{text-align:center;font-variant-numeric:tabular-nums;width:56px}
+th{font-size:12px;color:var(--mute);font-weight:700;vertical-align:bottom}
+td.n,th.n{text-align:center;font-variant-numeric:tabular-nums;min-width:52px}
 tr.row{cursor:pointer}
 .dot{display:inline-block;width:14px;height:14px;border-radius:50%;vertical-align:middle}
-.dot.g{background:var(--ok)}.dot.y{background:var(--u)}.dot.r{background:var(--f)}
+.dot.g{background:var(--ok)}.dot.y{background:var(--warn)}.dot.r{background:var(--bad)}
 tr.detail td{background:var(--bg);font-size:14px;color:var(--mute);padding:8px 14px}
 tr.detail ul{margin:0;padding-left:18px}
 .empty{padding:28px 16px;text-align:center;color:var(--mute)}
-.note{background:var(--u-bg);border:1px solid var(--u);border-radius:12px;padding:12px 14px;margin:0 0 16px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.note{background:var(--warn-bg);border:1px solid var(--warn);border-radius:12px;padding:12px 14px;margin:0 0 16px;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .note span{flex:1;min-width:180px}
 .list{border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .li{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 14px;background:var(--card);border-bottom:1px solid var(--line)}
 .li:last-child{border-bottom:0}
 .li span{flex:1}
 .li .iconbtn{font-size:18px;color:var(--mute);min-width:40px;min-height:40px}
+.li.cat{padding-left:8px}
+.li.cat select{padding:9px 6px}
+.swatch{flex:none;width:36px;height:36px;border-radius:50%;border:3px solid var(--card);outline:2px solid var(--c);background:var(--c);cursor:pointer}
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
 .field label{font-weight:600;font-size:14px;color:var(--mute)}
+.row2{display:flex;gap:12px;flex-wrap:wrap}.row2>.field{flex:1;min-width:120px}
 .actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px}
+.check{display:flex;align-items:center;gap:8px;font-size:15px;min-height:44px}
+.check input{width:22px;height:22px;min-height:0}
 #toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 20px);transform:translate(-50%,120px);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:20px;opacity:0;transition:.25s;z-index:20;pointer-events:none}
 #toast.on{opacity:1;transform:translate(-50%,0)}
-dialog{border:0;border-radius:16px;padding:20px;width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);background:var(--card);color:var(--ink)}
+dialog{border:0;border-radius:16px;padding:20px;width:min(560px,calc(100vw - 24px));max-height:calc(100vh - 40px);background:var(--card);color:var(--ink)}
 dialog::backdrop{background:rgba(0,0,0,.45)}
-dialog h3{margin:0 0 14px}
-.muted{color:var(--mute);font-size:14px}
+dialog h3{margin:0 0 6px}
 </style>
 </head>
 <body>
@@ -101,6 +130,7 @@ dialog h3{margin:0 0 14px}
 <script>
 'use strict';
 const KEY = 'ha-liste-v1';
+const COLORS = ['#d64545', '#e0a100', '#1f77b4', '#2e8b57', '#8e44ad', '#e67e22', '#16a085', '#c2185b', '#7f8c8d'];
 const $ = s => document.querySelector(s);
 const main = $('#view');
 const pad = n => String(n).padStart(2, '0');
@@ -111,15 +141,54 @@ const wd = iso => ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][new Date(iso + 'T12
 const uid = () => Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const byName = (a, b) => a.name.localeCompare(b.name, 'de');
+const num = n => String(n).replace('.', ',');
+function shortName(n) {
+  if (n.includes(',')) { const [nach, vor] = n.split(',').map(s => s.trim()); return vor ? `${vor} ${nach.charAt(0)}.` : nach; }
+  return n;
+}
 
 /* ---------- Speicher ---------- */
-function fresh() { return { v: 1, settings: { gelb: 2, rot: 3, halb: 0.5 }, classes: [], entries: {}, lastBackup: null }; }
+function defaultCats(halb) {
+  return [
+    { id: 'f', name: 'HA fehlt', color: COLORS[0], w: 1, grp: 'ha' },
+    { id: 'u', name: 'HA unvollständig', color: COLORS[1], w: halb ?? 0.5, grp: 'ha' }
+  ];
+}
+function fresh() { return { v: 2, settings: { gelb: 2, rot: 3 }, cats: defaultCats(), classes: [], entries: {}, lastBackup: null }; }
 function normalize(s) {
-  const n = fresh();
   if (!s || !Array.isArray(s.classes)) return null;
-  n.settings = Object.assign(n.settings, s.settings || {});
-  n.classes = s.classes.map(c => ({ id: c.id || uid(), name: String(c.name || 'Klasse'), subjects: (c.subjects && c.subjects.length) ? c.subjects.map(String) : ['Mathe'], lastSubj: c.lastSubj || null, students: (c.students || []).map(st => ({ id: st.id || uid(), name: String(st.name) })) }));
-  n.entries = s.entries || {};
+  const n = fresh();
+  n.settings.gelb = +(s.settings && s.settings.gelb) || 2;
+  n.settings.rot = +(s.settings && s.settings.rot) || 3;
+  n.cats = (Array.isArray(s.cats) && s.cats.length)
+    ? s.cats.map(k => ({ id: String(k.id || uid()), name: String(k.name || 'Kategorie'), color: k.color || COLORS[2], w: +k.w || 0, grp: k.grp || k.id }))
+    : defaultCats(s.settings && s.settings.halb !== undefined ? +s.settings.halb : 0.5);
+  n.classes = s.classes.map(c => {
+    const students = (c.students || []).map(st => ({ id: st.id || uid(), name: String(st.name) }));
+    const ids = new Set(students.map(x => x.id));
+    const se = c.seats || {};
+    const map = {};
+    for (const k in (se.map || {})) if (ids.has(se.map[k])) map[k] = se.map[k];
+    return {
+      id: c.id || uid(), name: String(c.name || 'Klasse'),
+      subjects: (c.subjects && c.subjects.length) ? c.subjects.map(String) : ['Mathe'],
+      lastSubj: c.lastSubj || null, students, view: c.view === 'seat' ? 'seat' : 'list',
+      seats: { rows: +se.rows || 5, cols: +se.cols || 6, flip: !!se.flip, map }
+    };
+  });
+  const E = s.entries || {};
+  for (const cid in E) {
+    n.entries[cid] = {};
+    for (const k in E[cid]) {
+      const day = {};
+      for (const sid in E[cid][k]) {
+        const v = E[cid][k][sid];
+        const arr = Array.isArray(v) ? v.map(String) : (v ? [String(v)] : []);
+        if (arr.length) day[sid] = arr;
+      }
+      if (Object.keys(day).length) n.entries[cid][k] = day;
+    }
+  }
   n.lastBackup = s.lastBackup || null;
   return n;
 }
@@ -132,12 +201,15 @@ function save() {
   try { localStorage.setItem(KEY, JSON.stringify(S)); }
   catch (e) { toast('⚠️ Speichern fehlgeschlagen'); }
 }
+save();
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
 
 /* ---------- UI-Zustand ---------- */
-let ui = { screen: 'home', cid: null, tab: 'erfassen', date: today(), subj: null, ovSubj: '*', ovRange: 'hj', detail: null };
+let ui = { screen: 'home', cid: null, tab: 'erfassen', date: today(), subj: null, cat: null, ovSubj: '*', ovRange: 'hj', ovCat: '*', detail: null, pick: null };
 const cls = () => S.classes.find(c => c.id === ui.cid);
+const catById = id => S.cats.find(k => k.id === id);
 function curSubj(c) { let s = ui.subj || c.lastSubj; if (!c.subjects.includes(s)) s = c.subjects[0]; return s; }
+function curCat() { return catById(ui.cat) || S.cats[0]; }
 
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 2200); }
 
@@ -177,16 +249,39 @@ function renderHome() {
   main.innerHTML = h;
 }
 
+/* ---------- Sitzplan-Hilfen ---------- */
+function seatOrder(c) {
+  const R = [...Array(c.seats.rows).keys()], C = [...Array(c.seats.cols).keys()];
+  // Standard: Pult unten (Blick der Lehrkraft), Reihe 0 = vorne. flip: Pult oben.
+  return c.seats.flip ? { rows: R, cols: C.slice().reverse() } : { rows: R.slice().reverse(), cols: C };
+}
+function seatKeyOf(c, sid) { for (const k in c.seats.map) if (c.seats.map[k] === sid) return k; return null; }
+function seatGrid(c, cell) {
+  const o = seatOrder(c);
+  const pult = `<div class="pult">Tafel / Pult</div>`;
+  let g = `<div class="scrollx"><div class="seats" style="--cols:${c.seats.cols}">`;
+  o.rows.forEach(r => o.cols.forEach(col => { g += cell(r + ',' + col, c.seats.map[r + ',' + col]); }));
+  g += `</div></div>`;
+  return c.seats.flip ? pult + g : g + pult;
+}
+
 /* ---------- Erfassen ---------- */
-function totalsFor(c, subj) {
+function totalsFor(c, subj, catId) {
   const t = {}; const E = S.entries[c.id] || {};
-  for (const k in E) { if (k.slice(11) !== subj) continue; for (const sid in E[k]) t[sid] = (t[sid] || 0) + 1; }
+  for (const k in E) { if (k.slice(11) !== subj) continue; for (const sid in E[k]) if (E[k][sid].includes(catId)) t[sid] = (t[sid] || 0) + 1; }
   return t;
 }
+function tile(st, day, cat, tot, seat) {
+  const arr = day[st.id] || [];
+  const on = arr.includes(cat.id);
+  const tags = arr.map(catById).filter(Boolean).map(k => `<span class="pill" style="--c:${k.color}">${esc(k.name)}</span>`).join('');
+  return `<button class="stu ${on ? 'on' : ''}" style="--c:${cat.color}" data-act="toggle" data-sid="${st.id}"><span class="sn">${esc(seat ? shortName(st.name) : st.name)}</span><span class="tags">${tags}</span>${tot[st.id] ? `<span class="tot">${tot[st.id]}</span>` : ''}</button>`;
+}
 function renderErfassen(c) {
-  const subj = curSubj(c);
+  const subj = curSubj(c), cat = curCat();
   const day = ((S.entries[c.id] || {})[ui.date + '|' + subj]) || {};
-  const tot = totalsFor(c, subj);
+  const tot = totalsFor(c, subj, cat.id);
+  const seatMode = c.view === 'seat';
   let h = `<div class="ctrl">
     <button class="iconbtn sm" data-act="day" data-d="-1" aria-label="Vorheriger Schultag">‹</button>
     <input type="date" data-chg="date" value="${ui.date}">
@@ -194,18 +289,32 @@ function renderErfassen(c) {
     <b>${wd(ui.date)}</b>
     <select class="grow" data-chg="subj">${c.subjects.map(s => `<option ${s === subj ? 'selected' : ''}>${esc(s)}</option>`).join('')}<option value="__new">+ Fach hinzufügen…</option></select>
   </div>
-  <p class="hint">Antippen: <span class="pill f">fehlt</span> → <span class="pill u">unvollständig</span> → zurücksetzen. Zahl oben rechts = Einträge gesamt in ${esc(subj)}.</p>`;
+  <div class="ctrl" style="flex-wrap:nowrap">
+    <div class="chips">${S.cats.map(k => `<button class="chip ${k.id === cat.id ? 'on' : ''}" style="--c:${k.color}" data-act="cat" data-id="${k.id}">${esc(k.name)}</button>`).join('')}</div>
+    <div class="seg"><button class="${seatMode ? '' : 'on'}" data-act="view" data-v="list">Liste</button><button class="${seatMode ? 'on' : ''}" data-act="view" data-v="seat">Sitzplan</button></div>
+  </div>
+  <p class="hint">Kategorie oben wählen, dann Schüler antippen – nochmal tippen entfernt. Zahl oben rechts = „${esc(cat.name)}“ gesamt in ${esc(subj)}.</p>`;
   if (!c.students.length) {
     h += `<div class="empty">Noch keine Schüler in dieser Klasse.<br><br><button class="btn primary" data-act="tab" data-tab="verwalten">Schüler eintragen</button></div>`;
-  } else {
-    h += `<div class="grid">` + c.students.map(st => {
-      const v = day[st.id] || '';
-      return `<button class="stu ${v}" data-act="toggle" data-sid="${st.id}"><span class="sn">${esc(st.name)}</span><span class="badge">${v === 'f' ? 'fehlt' : v === 'u' ? 'unvollständig' : ''}</span>${tot[st.id] ? `<span class="tot">${tot[st.id]}</span>` : ''}</button>`;
-    }).join('') + `</div>`;
-    const vals = Object.values(day);
-    const nf = vals.filter(v => v === 'f').length, nu = vals.filter(v => v === 'u').length;
-    h += `<p class="summary">${fmt(ui.date)} · ${esc(subj)}: ${nf} fehlt, ${nu} unvollständig. Wird automatisch gespeichert.</p>`;
+    main.innerHTML = h; return;
   }
+  if (seatMode) {
+    const seated = new Set(Object.values(c.seats.map));
+    if (!seated.size) {
+      h += `<div class="empty">Für diese Klasse gibt es noch keinen Sitzplan.<br><br><button class="btn primary" data-act="tab" data-tab="verwalten">Sitzplan anlegen</button></div>`;
+    } else {
+      const byId = Object.fromEntries(c.students.map(s => [s.id, s]));
+      h += seatGrid(c, (k, sid) => sid && byId[sid] ? tile(byId[sid], day, cat, tot, true) : `<div class="seat-empty"></div>`);
+      const rest = c.students.filter(s => !seated.has(s.id));
+      if (rest.length) h += `<h2>Ohne Sitzplatz</h2><div class="grid">${rest.map(s => tile(s, day, cat, tot, false)).join('')}</div>`;
+    }
+  } else {
+    h += `<div class="grid">${c.students.map(s => tile(s, day, cat, tot, false)).join('')}</div>`;
+  }
+  const cnt = {};
+  Object.values(day).forEach(a => a.forEach(id => cnt[id] = (cnt[id] || 0) + 1));
+  const parts = S.cats.filter(k => cnt[k.id]).map(k => `${esc(k.name)}: ${cnt[k.id]}`);
+  h += `<p class="summary">${fmt(ui.date)} · ${esc(subj)}: ${parts.length ? parts.join(' · ') : 'keine Einträge'}. Wird automatisch gespeichert.</p>`;
   main.innerHTML = h;
 }
 function shiftDay(iso, delta) {
@@ -222,41 +331,48 @@ function rangeFrom(r) {
   if (r === '4w') { const d = new Date(); d.setDate(d.getDate() - 28); return isoOf(d); }
   return '';
 }
-function stats(c, subj, from) {
+function shownCats() { return ui.ovCat === '*' ? S.cats : S.cats.filter(k => k.id === ui.ovCat); }
+function stats(c, subj, from, cats) {
+  const ids = new Set(cats.map(k => k.id));
   const res = {};
-  c.students.forEach(s => res[s.id] = { f: 0, u: 0, list: [] });
+  c.students.forEach(s => res[s.id] = { n: {}, p: 0, list: [] });
   const E = S.entries[c.id] || {};
   for (const k in E) {
     const d = k.slice(0, 10), sj = k.slice(11);
     if (subj !== '*' && sj !== subj) continue;
     if (from && d < from) continue;
-    for (const sid in E[k]) { const r = res[sid]; if (!r) continue; const v = E[k][sid]; r[v]++; r.list.push({ d, sj, v }); }
+    for (const sid in E[k]) {
+      const r = res[sid]; if (!r) continue;
+      E[k][sid].forEach(cid => { if (!ids.has(cid)) return; r.n[cid] = (r.n[cid] || 0) + 1; r.p += catById(cid).w; r.list.push({ d, sj, cid }); });
+    }
   }
-  for (const sid in res) { const r = res[sid]; r.p = r.f + r.u * S.settings.halb; r.list.sort((a, b) => b.d.localeCompare(a.d)); }
+  for (const sid in res) res[sid].list.sort((a, b) => b.d.localeCompare(a.d));
   return res;
 }
 const ampel = p => p >= S.settings.rot ? 'r' : p >= S.settings.gelb ? 'y' : 'g';
 function renderUebersicht(c) {
   if (ui.ovSubj !== '*' && !c.subjects.includes(ui.ovSubj)) ui.ovSubj = '*';
-  const from = rangeFrom(ui.ovRange);
-  const st = stats(c, ui.ovSubj, from);
+  if (ui.ovCat !== '*' && !catById(ui.ovCat)) ui.ovCat = '*';
+  const from = rangeFrom(ui.ovRange), cats = shownCats();
+  const st = stats(c, ui.ovSubj, from, cats);
   const rows = c.students.slice().sort((a, b) => (st[b.id].p - st[a.id].p) || byName(a, b));
   const nr = rows.filter(s => ampel(st[s.id].p) === 'r').length, ny = rows.filter(s => ampel(st[s.id].p) === 'y').length;
   let h = `<div class="ctrl">
     <select class="grow" data-chg="ovSubj"><option value="*">Alle Fächer</option>${c.subjects.map(s => `<option ${s === ui.ovSubj ? 'selected' : ''}>${esc(s)}</option>`).join('')}</select>
+    <select class="grow" data-chg="ovCat"><option value="*">Alle Kategorien</option>${S.cats.map(k => `<option value="${k.id}" ${k.id === ui.ovCat ? 'selected' : ''}>${esc(k.name)}</option>`).join('')}</select>
     <select class="grow" data-chg="ovRange">
       ${[['hj', 'Dieses Halbjahr'], ['sj', 'Dieses Schuljahr'], ['4w', 'Letzte 4 Wochen'], ['all', 'Gesamt']].map(([v, l]) => `<option value="${v}" ${v === ui.ovRange ? 'selected' : ''}>${l}</option>`).join('')}
     </select>
   </div>
-  <p class="hint">${from ? 'Seit ' + fmt(from) : 'Alle Einträge'} · <span class="dot r"></span> ${nr} &nbsp; <span class="dot y"></span> ${ny} · Ampel: gelb ab ${S.settings.gelb}, rot ab ${S.settings.rot} Punkten (unvollständig = ${String(S.settings.halb).replace('.', ',')}). Zeile antippen für Details.</p>`;
+  <p class="hint">${from ? 'Seit ' + fmt(from) : 'Alle Einträge'} · <span class="dot r"></span> ${nr} &nbsp; <span class="dot y"></span> ${ny} · Ampel: gelb ab ${num(S.settings.gelb)}, rot ab ${num(S.settings.rot)} Punkten (Punkte je Kategorie unter ⚙︎). Zeile antippen für Details.</p>`;
   if (!rows.length) { main.innerHTML = h + `<div class="empty">Keine Schüler.</div>`; return; }
-  h += `<table><thead><tr><th></th><th>Name</th><th class="n">fehlt</th><th class="n">unv.</th></tr></thead><tbody>`;
+  h += `<div class="tablewrap"><table><thead><tr><th></th><th>Name</th>${cats.map(k => `<th class="n" style="color:${k.color}">${esc(k.name)}</th>`).join('')}<th class="n">Pkt.</th></tr></thead><tbody>`;
   rows.forEach(s => {
     const r = st[s.id];
-    h += `<tr class="row" data-act="detail" data-sid="${s.id}"><td style="width:30px"><span class="dot ${ampel(r.p)}"></span></td><td>${esc(s.name)}</td><td class="n">${r.f || '–'}</td><td class="n">${r.u || '–'}</td></tr>`;
-    if (ui.detail === s.id) h += `<tr class="detail"><td colspan="4">${r.list.length ? '<ul>' + r.list.map(x => `<li>${wd(x.d)} ${fmt(x.d)} · ${esc(x.sj)} · ${x.v === 'f' ? 'fehlt' : 'unvollständig'}</li>`).join('') + '</ul>' : 'Keine Einträge im Zeitraum.'}</td></tr>`;
+    h += `<tr class="row" data-act="detail" data-sid="${s.id}"><td style="width:30px"><span class="dot ${ampel(r.p)}"></span></td><td>${esc(s.name)}</td>${cats.map(k => `<td class="n">${r.n[k.id] || '–'}</td>`).join('')}<td class="n">${r.p ? num(r.p) : '–'}</td></tr>`;
+    if (ui.detail === s.id) h += `<tr class="detail"><td colspan="${cats.length + 3}">${r.list.length ? '<ul>' + r.list.map(x => `<li>${wd(x.d)} ${fmt(x.d)} · ${esc(x.sj)} · ${esc(catById(x.cid).name)}</li>`).join('') + '</ul>' : 'Keine Einträge im Zeitraum.'}</td></tr>`;
   });
-  h += `</tbody></table>
+  h += `</tbody></table></div>
   <div class="actions" style="justify-content:flex-start;margin-top:14px">
     <button class="btn" data-act="csvOverview">Übersicht als CSV</button>
     <button class="btn" data-act="csvRaw">Alle Einträge als CSV</button>
@@ -266,11 +382,32 @@ function renderUebersicht(c) {
 
 /* ---------- Klasse verwalten ---------- */
 function renderVerwalten(c) {
+  const byId = Object.fromEntries(c.students.map(s => [s.id, s]));
+  const seated = new Set(Object.values(c.seats.map));
+  const unseated = c.students.filter(s => !seated.has(s.id));
+  const opt = (n, v) => [...Array(n).keys()].map(i => `<option ${i + 1 === v ? 'selected' : ''}>${i + 1}</option>`).join('');
+  const pickSeated = ui.pick && seated.has(ui.pick);
   main.innerHTML = `
   <h2 style="margin-top:4px">Klasse</h2>
   <div class="field"><label>Klassenname</label><input id="vName" value="${esc(c.name)}"></div>
   <div class="field"><label>Fächer (mit Komma getrennt)</label><input id="vSubj" value="${esc(c.subjects.join(', '))}"></div>
   <button class="btn primary" data-act="saveMeta">Speichern</button>
+
+  <h2>Sitzplan</h2>
+  <div class="ctrl">
+    <label class="muted">Reihen</label><select data-chg="seatRows">${opt(10, c.seats.rows)}</select>
+    <label class="muted">Plätze pro Reihe</label><select data-chg="seatCols">${opt(12, c.seats.cols)}</select>
+    <label class="check"><input type="checkbox" data-chg="seatFlip" ${c.seats.flip ? 'checked' : ''}> Pult oben</label>
+  </div>
+  <p class="hint">${ui.pick ? `<b>${esc(byId[ui.pick] ? byId[ui.pick].name : '')}</b> ausgewählt – jetzt auf einen Platz tippen. Belegter Platz = tauschen.` : 'Schüler antippen, dann Platz antippen. Leere Plätze bleiben frei (z. B. für Gänge).'}</p>
+  ${seatGrid(c, (k, sid) => `<button class="ecell ${sid ? 'has' : ''} ${sid && sid === ui.pick ? 'sel' : ''}" data-act="seatCell" data-k="${k}">${sid && byId[sid] ? esc(shortName(byId[sid].name)) : '+'}</button>`)}
+  <h4>Ohne Sitzplatz (${unseated.length})</h4>
+  ${unseated.length ? `<div class="schips">${unseated.map(s => `<button class="schip ${s.id === ui.pick ? 'sel' : ''}" data-act="pick" data-sid="${s.id}">${esc(s.name)}</button>`).join('')}</div>` : '<p class="muted">Alle Schüler haben einen Platz.</p>'}
+  <div class="actions" style="justify-content:flex-start;margin-top:12px">
+    ${pickSeated ? '<button class="btn" data-act="seatUnseat">Platz freigeben</button>' : ''}
+    ${unseated.length ? '<button class="btn" data-act="seatAuto">Freie Plätze alphabetisch füllen</button>' : ''}
+    ${seated.size ? '<button class="btn danger" data-act="seatClear">Sitzplan leeren</button>' : ''}
+  </div>
 
   <h2>Schüler (${c.students.length})</h2>
   ${c.students.length ? `<div class="list">${c.students.map(s => `<div class="li"><span>${esc(s.name)}</span><button class="iconbtn" data-act="renStu" data-sid="${s.id}" aria-label="Umbenennen">✎</button><button class="iconbtn" data-act="delStu" data-sid="${s.id}" aria-label="Entfernen">✕</button></div>`).join('')}</div>` : '<p class="muted">Noch keine Schüler.</p>'}
@@ -301,6 +438,12 @@ function addStudents(c, text) {
   return n;
 }
 const parseSubjects = t => [...new Set(t.split(',').map(s => s.trim().replace(/\|/g, '/')).filter(Boolean))];
+function resizeSeats(c, rows, cols) {
+  const out = Object.keys(c.seats.map).filter(k => { const [r, col] = k.split(',').map(Number); return r >= rows || col >= cols; });
+  if (out.length && !confirm(`${out.length} Schüler sitzen außerhalb des neuen Plans und verlieren ihren Platz. Fortfahren?`)) { render(); return; }
+  out.forEach(k => delete c.seats.map[k]);
+  c.seats.rows = rows; c.seats.cols = cols; save(); render();
+}
 
 /* ---------- Dateien ---------- */
 async function shareOrDownload(name, text, mime) {
@@ -315,53 +458,110 @@ async function shareOrDownload(name, text, mime) {
   return true;
 }
 const csvCell = v => { v = String(v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-const csv = rows => '\ufeff' + rows.map(r => r.map(csvCell).join(';')).join('\r\n');
+const csv = rows => '﻿' + rows.map(r => r.map(csvCell).join(';')).join('\r\n');
 const safe = s => String(s).replace(/[^\wäöüÄÖÜß-]+/g, '_');
 async function backup() {
   const ok = await shareOrDownload(`HA-Liste_Backup_${today()}.json`, JSON.stringify({ app: 'ha-liste', exported: new Date().toISOString(), data: S }), 'application/json');
-  if (ok) { S.lastBackup = Date.now(); save(); toast('Sicherung erstellt'); render(); }
+  if (ok) { S.lastBackup = Date.now(); save(); toast('Sicherung erstellt'); if (!dlg.open) render(); else renderSettings(); }
 }
 
 /* ---------- Dialoge ---------- */
-function modal(html, bind) { const d = $('#dlg'); d.innerHTML = html; d.querySelectorAll('[data-close]').forEach(b => b.onclick = () => d.close()); bind && bind(d); d.showModal(); }
+const dlg = $('#dlg');
+function modal(html, bind) { dlg.innerHTML = html; bind && bind(dlg); if (!dlg.open) dlg.showModal(); }
+dlg.addEventListener('close', () => render());
 function classDialog() {
   modal(`<h3>Neue Klasse</h3>
-    <div class="field"><label>Klassenname</label><input id="nName" placeholder="z. B. 9b"></div>
+    <div class="field" style="margin-top:12px"><label>Klassenname</label><input id="nName" placeholder="z. B. 9b"></div>
     <div class="field"><label>Fächer (mit Komma getrennt)</label><input id="nSubj" value="Mathe"></div>
     <div class="field"><label>Schüler (ein Name pro Zeile, optional)</label><textarea id="nStu" placeholder="Müller, Anna&#10;Schmidt, Ben"></textarea></div>
     <div class="actions"><button class="btn" data-close>Abbrechen</button><button class="btn primary" id="nOk">Anlegen</button></div>`, d => {
     d.querySelector('#nOk').onclick = () => {
       const name = d.querySelector('#nName').value.trim();
       if (!name) { d.querySelector('#nName').focus(); return; }
-      const c = { id: uid(), name, subjects: parseSubjects(d.querySelector('#nSubj').value), students: [], lastSubj: null };
+      const c = { id: uid(), name, subjects: parseSubjects(d.querySelector('#nSubj').value), students: [], lastSubj: null, view: 'list', seats: { rows: 5, cols: 6, flip: false, map: {} } };
       if (!c.subjects.length) c.subjects = ['Mathe'];
       addStudents(c, d.querySelector('#nStu').value);
-      S.classes.push(c); save(); d.close();
-      Object.assign(ui, { screen: 'class', cid: c.id, tab: c.students.length ? 'erfassen' : 'verwalten', date: today(), subj: null, detail: null });
-      render(); scrollTo(0, 0);
+      S.classes.push(c); save();
+      Object.assign(ui, { screen: 'class', cid: c.id, tab: c.students.length ? 'erfassen' : 'verwalten', date: today(), subj: null, detail: null, pick: null });
+      d.close(); scrollTo(0, 0);
     };
   });
 }
-function settingsDialog() {
+function countCatUse(id) {
+  let n = 0;
+  for (const cid in S.entries) for (const k in S.entries[cid]) for (const sid in S.entries[cid][k]) if (S.entries[cid][k][sid].includes(id)) n++;
+  return n;
+}
+function renderSettings() {
   const s = S.settings;
   modal(`<h3>Einstellungen</h3>
-    <div class="field"><label>Ampel gelb ab … Punkten</label><input id="sG" type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.gelb}"></div>
-    <div class="field"><label>Ampel rot ab … Punkten</label><input id="sR" type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.rot}"></div>
-    <div class="field"><label>„Unvollständig“ zählt als</label><select id="sH">${[[0, '0 Punkte'], [0.5, '0,5 Punkte'], [1, '1 Punkt']].map(([v, l]) => `<option value="${v}" ${v == s.halb ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-    <div class="actions"><button class="btn primary" id="sOk">Übernehmen</button></div>
-    <h3 style="margin-top:22px">Datensicherung</h3>
-    <p class="muted">Alle Daten liegen nur auf diesem Gerät. Wird die App vom Home-Bildschirm gelöscht, sind auch die Daten weg. Sichere regelmäßig, z. B. in „Dateien“ oder per AirDrop. Letzte Sicherung: ${S.lastBackup ? new Date(S.lastBackup).toLocaleDateString('de-DE') : 'noch nie'}.</p>
-    <div class="actions" style="justify-content:flex-start"><button class="btn" id="sB">Sicherung exportieren</button><button class="btn" id="sI">Sicherung importieren</button></div>
-    <div class="actions"><button class="btn" data-close>Schließen</button></div>`, d => {
-    d.querySelector('#sOk').onclick = () => {
-      const g = parseFloat(d.querySelector('#sG').value), r = parseFloat(d.querySelector('#sR').value);
-      if (!(g > 0) || !(r >= g)) { toast('Rot muss ≥ Gelb sein'); return; }
-      S.settings = { gelb: g, rot: r, halb: parseFloat(d.querySelector('#sH').value) }; save(); toast('Gespeichert'); render();
-    };
-    d.querySelector('#sB').onclick = () => backup();
-    d.querySelector('#sI').onclick = () => $('#importFile').click();
-  });
+    <h4>Erfassungskategorien</h4>
+    <p class="muted" style="margin:0 0 8px">Farbe antippen zum Wechseln. Punkte zählen für die Ampel – 0 Punkte heißt „nur zählen“.</p>
+    <div class="list">${S.cats.map((k, i) => `<div class="li cat">
+      <button class="swatch" style="--c:${k.color}" data-dact="color" data-i="${i}" aria-label="Farbe ändern"></button>
+      <input class="grow" value="${esc(k.name)}" data-dchg="name" data-i="${i}" aria-label="Name">
+      <select data-dchg="w" data-i="${i}" aria-label="Punkte">${[0, 0.5, 1, 2, 3].map(w => `<option value="${w}" ${w == k.w ? 'selected' : ''}>${num(w)} P.</option>`).join('')}</select>
+      <button class="iconbtn" data-dact="up" data-i="${i}" ${i ? '' : 'disabled'} aria-label="Nach oben">↑</button>
+      <button class="iconbtn" data-dact="delcat" data-i="${i}" ${S.cats.length > 1 ? '' : 'disabled'} aria-label="Löschen">✕</button>
+    </div>`).join('')}</div>
+    <div class="ctrl" style="margin-top:10px">
+      <input class="grow" id="newCat" placeholder="Neue Kategorie, z. B. Material fehlt" style="min-width:180px">
+      <button class="btn" data-dact="addcat">Hinzufügen</button>
+    </div>
+    <h4>Ampel</h4>
+    <div class="row2">
+      <div class="field"><label>Gelb ab … Punkten</label><input type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.gelb}" data-dchg="gelb"></div>
+      <div class="field"><label>Rot ab … Punkten</label><input type="number" inputmode="decimal" min="0.5" step="0.5" value="${s.rot}" data-dchg="rot"></div>
+    </div>
+    <h4>Datensicherung</h4>
+    <p class="muted" style="margin-top:0">Alle Daten liegen nur auf diesem Gerät. Wird die App vom Home-Bildschirm gelöscht, sind auch die Daten weg. Letzte Sicherung: ${S.lastBackup ? new Date(S.lastBackup).toLocaleDateString('de-DE') : 'noch nie'}.</p>
+    <div class="actions" style="justify-content:flex-start"><button class="btn" data-dact="backup">Sicherung exportieren</button><button class="btn" data-dact="import">Sicherung importieren</button></div>
+    <div class="actions" style="margin-top:20px"><button class="btn primary" data-close>Fertig</button></div>`);
 }
+dlg.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) { dlg.close(); return; }
+  const b = e.target.closest('[data-dact]'); if (!b) return;
+  const i = +b.dataset.i, k = S.cats[i];
+  switch (b.dataset.dact) {
+    case 'color': k.color = COLORS[(COLORS.indexOf(k.color) + 1) % COLORS.length]; break;
+    case 'up': [S.cats[i - 1], S.cats[i]] = [S.cats[i], S.cats[i - 1]]; break;
+    case 'delcat': {
+      const n = countCatUse(k.id);
+      if (!confirm(`Kategorie „${k.name}“ löschen?${n ? ` Dabei werden ${n} Einträge entfernt.` : ''}`)) return;
+      for (const cid in S.entries) for (const key in S.entries[cid]) {
+        const day = S.entries[cid][key];
+        for (const sid in day) { day[sid] = day[sid].filter(x => x !== k.id); if (!day[sid].length) delete day[sid]; }
+        if (!Object.keys(day).length) delete S.entries[cid][key];
+      }
+      S.cats.splice(i, 1);
+      if (ui.ovCat === k.id) ui.ovCat = '*';
+      break;
+    }
+    case 'addcat': {
+      const name = dlg.querySelector('#newCat').value.trim();
+      if (!name) { dlg.querySelector('#newCat').focus(); return; }
+      const used = new Set(S.cats.map(x => x.color));
+      const id = uid();
+      S.cats.push({ id, name, color: COLORS.find(c => !used.has(c)) || COLORS[S.cats.length % COLORS.length], w: 1, grp: id });
+      break;
+    }
+    case 'backup': backup(); return;
+    case 'import': $('#importFile').click(); return;
+  }
+  save(); renderSettings();
+});
+dlg.addEventListener('change', e => {
+  const t = e.target, f = t.dataset.dchg; if (!f) return;
+  const k = S.cats[+t.dataset.i];
+  if (f === 'name') { const v = t.value.trim(); if (v) k.name = v; else t.value = k.name; }
+  else if (f === 'w') k.w = parseFloat(t.value);
+  else if (f === 'gelb' || f === 'rot') {
+    const v = parseFloat(t.value), g = f === 'gelb' ? v : S.settings.gelb, r = f === 'rot' ? v : S.settings.rot;
+    if (!(v > 0) || r < g) { toast('Rot muss mindestens so hoch wie Gelb sein'); t.value = S.settings[f]; return; }
+    S.settings[f] = v;
+  }
+  save(); toast('Gespeichert');
+});
 $('#importFile').addEventListener('change', e => {
   const f = e.target.files[0]; e.target.value = '';
   if (!f) return;
@@ -371,8 +571,9 @@ $('#importFile').addEventListener('change', e => {
       const j = JSON.parse(rd.result); const n = normalize(j.data || j);
       if (!n) throw 0;
       if (!confirm(`Sicherung mit ${n.classes.length} Klasse(n) importieren? Die aktuellen Daten auf diesem Gerät werden ersetzt.`)) return;
-      S = n; save(); $('#dlg').open && $('#dlg').close();
-      ui.screen = 'home'; render(); toast('Sicherung importiert');
+      S = n; save(); ui.screen = 'home';
+      if (dlg.open) dlg.close(); else render();
+      toast('Sicherung importiert');
     } catch (err) { alert('Diese Datei ist keine gültige HA-Liste-Sicherung.'); }
   };
   rd.readAsText(f);
@@ -380,34 +581,60 @@ $('#importFile').addEventListener('change', e => {
 
 /* ---------- Aktionen ---------- */
 const acts = {
-  openClass(b) { Object.assign(ui, { screen: 'class', cid: b.dataset.cid, tab: 'erfassen', date: today(), subj: null, detail: null }); render(); scrollTo(0, 0); },
+  openClass(b) { Object.assign(ui, { screen: 'class', cid: b.dataset.cid, tab: 'erfassen', date: today(), subj: null, detail: null, pick: null }); render(); scrollTo(0, 0); },
   addClass: () => classDialog(),
   backup: () => backup(),
-  tab(b) { ui.tab = b.dataset.tab; render(); scrollTo(0, 0); },
+  tab(b) { ui.tab = b.dataset.tab; ui.pick = null; render(); scrollTo(0, 0); },
   day(b) { ui.date = shiftDay(ui.date, +b.dataset.d); render(); },
+  cat(b) { ui.cat = b.dataset.id; render(); },
+  view(b) { cls().view = b.dataset.v; save(); render(); },
   toggle(b) {
-    const c = cls(), subj = curSubj(c), k = ui.date + '|' + subj;
+    const c = cls(), subj = curSubj(c), cat = curCat(), k = ui.date + '|' + subj;
     const E = S.entries[c.id] || (S.entries[c.id] = {});
     const day = E[k] || (E[k] = {});
     const sid = b.dataset.sid;
-    const nxt = { '': 'f', f: 'u', u: '' }[day[sid] || ''];
-    if (nxt) day[sid] = nxt; else delete day[sid];
+    let arr = day[sid] || [];
+    if (arr.includes(cat.id)) arr = arr.filter(x => x !== cat.id);
+    else { arr = arr.filter(x => { const o = catById(x); return !o || o.grp !== cat.grp; }); arr.push(cat.id); }
+    if (arr.length) day[sid] = arr; else delete day[sid];
     if (!Object.keys(day).length) delete E[k];
     save(); render();
   },
   detail(b) { ui.detail = ui.detail === b.dataset.sid ? null : b.dataset.sid; render(); },
+  pick(b) { ui.pick = ui.pick === b.dataset.sid ? null : b.dataset.sid; render(); },
+  seatCell(b) {
+    const c = cls(), key = b.dataset.k, occ = c.seats.map[key];
+    if (!ui.pick) { if (occ) ui.pick = occ; render(); return; }
+    if (occ === ui.pick) { ui.pick = null; render(); return; }
+    const from = seatKeyOf(c, ui.pick);
+    if (from) delete c.seats.map[from];
+    if (occ && from) c.seats.map[from] = occ;
+    c.seats.map[key] = ui.pick;
+    ui.pick = null; save(); render();
+  },
+  seatUnseat() { const c = cls(), k = seatKeyOf(c, ui.pick); if (k) delete c.seats.map[k]; ui.pick = null; save(); render(); },
+  seatAuto() {
+    const c = cls(), seated = new Set(Object.values(c.seats.map));
+    const rest = c.students.filter(s => !seated.has(s.id));
+    for (let r = 0; r < c.seats.rows && rest.length; r++)
+      for (let col = 0; col < c.seats.cols && rest.length; col++)
+        if (!c.seats.map[r + ',' + col]) c.seats.map[r + ',' + col] = rest.shift().id;
+    if (rest.length) toast(`${rest.length} Schüler passen nicht mehr – mehr Plätze anlegen`);
+    ui.pick = null; save(); render();
+  },
+  seatClear() { if (!confirm('Alle Sitzplätze dieser Klasse freigeben?')) return; cls().seats.map = {}; ui.pick = null; save(); render(); },
   csvOverview() {
-    const c = cls(), from = rangeFrom(ui.ovRange), st = stats(c, ui.ovSubj, from);
-    const rows = [['Klasse', 'Name', 'Fach', 'Zeitraum ab', 'fehlt', 'unvollständig', 'Punkte', 'Ampel']];
-    c.students.slice().sort(byName).forEach(s => { const r = st[s.id]; rows.push([c.name, s.name, ui.ovSubj === '*' ? 'alle' : ui.ovSubj, from ? fmt(from) : 'gesamt', r.f, r.u, String(r.p).replace('.', ','), { g: 'grün', y: 'gelb', r: 'rot' }[ampel(r.p)]]); });
+    const c = cls(), from = rangeFrom(ui.ovRange), cats = shownCats(), st = stats(c, ui.ovSubj, from, cats);
+    const rows = [['Klasse', 'Name', 'Fach', 'Zeitraum ab', ...cats.map(k => k.name), 'Punkte', 'Ampel']];
+    c.students.slice().sort(byName).forEach(s => { const r = st[s.id]; rows.push([c.name, s.name, ui.ovSubj === '*' ? 'alle' : ui.ovSubj, from ? fmt(from) : 'gesamt', ...cats.map(k => r.n[k.id] || 0), num(r.p), { g: 'grün', y: 'gelb', r: 'rot' }[ampel(r.p)]]); });
     shareOrDownload(`HA_${safe(c.name)}_Uebersicht_${today()}.csv`, csv(rows), 'text/csv');
   },
   csvRaw() {
     const c = cls(), E = S.entries[c.id] || {}, names = Object.fromEntries(c.students.map(s => [s.id, s.name]));
     const rows = [];
-    for (const k in E) for (const sid in E[k]) if (names[sid]) rows.push([k.slice(0, 10), k.slice(11), names[sid], E[k][sid]]);
+    for (const k in E) for (const sid in E[k]) if (names[sid]) E[k][sid].forEach(cid => { const cat = catById(cid); if (cat) rows.push([k.slice(0, 10), k.slice(11), names[sid], cat.name]); });
     rows.sort((a, b) => a[0].localeCompare(b[0]) || a[1].localeCompare(b[1]) || a[2].localeCompare(b[2], 'de'));
-    shareOrDownload(`HA_${safe(c.name)}_Eintraege_${today()}.csv`, csv([['Datum', 'Fach', 'Name', 'Status'], ...rows.map(r => [fmt(r[0]), r[1], r[2], r[3] === 'f' ? 'fehlt' : 'unvollständig'])]), 'text/csv');
+    shareOrDownload(`HA_${safe(c.name)}_Eintraege_${today()}.csv`, csv([['Datum', 'Fach', 'Name', 'Kategorie'], ...rows.map(r => [fmt(r[0]), r[1], r[2], r[3]])]), 'text/csv');
   },
   saveMeta() {
     const c = cls(), name = $('#vName').value.trim(), subs = parseSubjects($('#vSubj').value);
@@ -428,8 +655,10 @@ const acts = {
     const c = cls(), s = c.students.find(x => x.id === b.dataset.sid);
     if (!confirm(`${s.name} mit allen Einträgen entfernen?`)) return;
     c.students = c.students.filter(x => x.id !== s.id);
+    const k = seatKeyOf(c, s.id); if (k) delete c.seats.map[k];
+    if (ui.pick === s.id) ui.pick = null;
     const E = S.entries[c.id] || {};
-    for (const k in E) { delete E[k][s.id]; if (!Object.keys(E[k]).length) delete E[k]; }
+    for (const key in E) { delete E[key][s.id]; if (!Object.keys(E[key]).length) delete E[key]; }
     save(); render();
   },
   delClass() {
@@ -453,17 +682,25 @@ const chg = {
     ui.subj = t.value; c.lastSubj = t.value; save(); render();
   },
   ovSubj(t) { ui.ovSubj = t.value; ui.detail = null; render(); },
-  ovRange(t) { ui.ovRange = t.value; render(); }
+  ovCat(t) { ui.ovCat = t.value; render(); },
+  ovRange(t) { ui.ovRange = t.value; render(); },
+  seatRows(t) { const c = cls(); resizeSeats(c, +t.value, c.seats.cols); },
+  seatCols(t) { const c = cls(); resizeSeats(c, c.seats.rows, +t.value); },
+  seatFlip(t) { cls().seats.flip = t.checked; save(); render(); }
 };
 main.addEventListener('click', e => { const b = e.target.closest('[data-act]'); if (b && acts[b.dataset.act]) acts[b.dataset.act](b, e); });
 main.addEventListener('change', e => { const t = e.target; if (t.dataset.chg && chg[t.dataset.chg]) chg[t.dataset.chg](t); });
 $('#tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) acts.tab(b); });
-$('#back').onclick = () => { ui.screen = 'home'; render(); scrollTo(0, 0); };
-$('#menu').onclick = settingsDialog;
+$('#back').onclick = () => { ui.screen = 'home'; ui.pick = null; render(); scrollTo(0, 0); };
+$('#menu').onclick = renderSettings;
 window.addEventListener('storage', e => { if (e.key === KEY) { S = load(); render(); } });
 
 render();
-if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => { });
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js').catch(() => { });
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) location.reload(); });
+}
 </script>
 </body>
 </html>
