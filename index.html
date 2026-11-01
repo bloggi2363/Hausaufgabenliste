@@ -166,7 +166,7 @@ function defaultCats(halb) {
 const NIV = { msa: 'MSA', ue: 'Ü' };
 // Mindest-Durchschnitt (Sterne 1–5) für die Noten 1–5, darunter 6
 const defaultScales = () => ({ msa: [4.5, 3.8, 3.0, 2.2, 1.5], ue: [4.7, 4.2, 3.5, 2.7, 1.8] });
-function fresh() { return { v: 3, settings: { gelb: 2, rot: 3 }, scales: defaultScales(), cats: defaultCats(), classes: [], entries: {}, beitr: {}, lastBackup: null }; }
+function fresh() { return { v: 3, settings: { gelb: 2, rot: 3, erinn: 7, keep: 30 }, scales: defaultScales(), cats: defaultCats(), classes: [], entries: {}, beitr: {}, lastBackup: null }; }
 function normalize(s) {
   if (!s || !Array.isArray(s.classes)) return null;
   const n = fresh();
@@ -213,6 +213,9 @@ function normalize(s) {
     }
   }
   n.lastBackup = s.lastBackup || null;
+  const ss = s.settings || {};
+  n.settings.erinn = [1, 3, 7, 14].includes(+ss.erinn) ? +ss.erinn : 7;
+  n.settings.keep = [7, 14, 30, 60, 0].includes(+ss.keep) ? +ss.keep : 30;
   return n;
 }
 function load() {
@@ -220,11 +223,12 @@ function load() {
   return fresh();
 }
 let S = load();
-function save() {
-  try { localStorage.setItem(KEY, JSON.stringify(S)); }
-  catch (e) { toast('⚠️ Speichern fehlgeschlagen'); }
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(S)); return true; }
+  catch (e) { toast('⚠️ Speichern fehlgeschlagen'); return false; }
 }
-save();
+function save() { if (persist() && typeof autoBackupSoon === 'function') autoBackupSoon(); }
+persist();
 if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => { });
 
 /* ---------- UI-Zustand ---------- */
@@ -266,7 +270,10 @@ function renderHome() {
   if (!standalone) h += `<div class="note"><span>Für Offline-Nutzung und dauerhafte Speicherung: in Safari <b>Teilen → Zum Home-Bildschirm</b> und die App von dort starten.</span></div>`;
   if (S.classes.length) {
     const days = S.lastBackup ? Math.floor((Date.now() - S.lastBackup) / 864e5) : null;
-    if (days === null || days >= 14) h += `<div class="note"><span>Letzte Sicherung: <b>${days === null ? 'noch nie' : 'vor ' + days + ' Tagen'}</b>. Die Daten liegen nur auf diesem Gerät.</span><button class="btn small" data-act="backup">Jetzt sichern</button></div>`;
+    const when = days === null ? 'noch nie' : days === 0 ? 'heute' : days === 1 ? 'gestern' : 'vor ' + days + ' Tagen';
+    if (folder.handle && folder.perm !== 'granted') h += `<div class="note"><span>Automatische Sicherung in <b>„${esc(folder.handle.name)}“</b> ist pausiert – der Browser braucht nach dem Neustart einmal deine Freigabe.</span><button class="btn small" data-act="grantFolder">Freigeben</button></div>`;
+    else if (folder.handle && folder.err) h += `<div class="note"><span>⚠️ Automatische Sicherung fehlgeschlagen (${esc(folder.err)}). Letzte Sicherung: <b>${when}</b>.</span><button class="btn small" data-act="backup">Erneut versuchen</button></div>`;
+    else if (!folder.handle && (days === null || days >= S.settings.erinn)) h += `<div class="note"><span>Letzte Sicherung: <b>${when}</b>. Die Daten liegen nur auf diesem Gerät.</span><button class="btn small" data-act="backup">Jetzt sichern</button></div>`;
     h += `<h2>Klasse wählen</h2><div class="cards">` + S.classes.slice().sort(byName).map(c =>
       `<button class="card" data-act="openClass" data-cid="${c.id}"><span class="cname">${esc(c.name)}</span><span class="cmeta">${c.students.length} Schüler · ${c.subjects.map(esc).join(', ')}</span></button>`).join('') + `</div>`;
   } else {
@@ -544,10 +551,103 @@ async function shareOrDownload(name, text, mime) {
 const csvCell = v => { v = String(v); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
 const csv = rows => '﻿' + rows.map(r => r.map(csvCell).join(';')).join('\r\n');
 const safe = s => String(s).replace(/[^\wäöüÄÖÜß-]+/g, '_');
-async function backup() {
-  const ok = await shareOrDownload(`HA-Liste_Backup_${today()}.json`, JSON.stringify({ app: 'ha-liste', exported: new Date().toISOString(), data: S }), 'application/json');
-  if (ok) { S.lastBackup = Date.now(); save(); toast('Sicherung erstellt'); if (!dlg.open) render(); else renderSettings(); }
+const backupName = () => `HA-Liste_Backup_${today()}.json`;
+const backupText = () => JSON.stringify({ app: 'ha-liste', exported: new Date().toISOString(), data: S });
+function afterBackup(msg) {
+  S.lastBackup = Date.now(); persist();
+  if (msg) toast(msg);
+  if (dlg.open) renderSettings(); else render();
 }
+async function backup() {
+  if (folder.handle) {
+    if (await writeToFolder(true)) { afterBackup('Gesichert in „' + folder.handle.name + '“'); return; }
+  }
+  const ok = await shareOrDownload(backupName(), backupText(), 'application/json');
+  if (ok) afterBackup('Sicherung erstellt');
+}
+
+/* ---------- Automatische Sicherung in einen Ordner (Chrome/Edge am Rechner) ---------- */
+const canFolder = 'showDirectoryPicker' in window;
+const folder = { handle: null, perm: 'none', busy: false, err: null };
+function idb() {
+  return new Promise((res, rej) => {
+    const r = indexedDB.open('ha-liste-fs', 1);
+    r.onupgradeneeded = () => r.result.createObjectStore('kv');
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  });
+}
+async function idbDo(mode, fn) {
+  const db = await idb();
+  return new Promise((res, rej) => {
+    const tx = db.transaction('kv', mode), rq = fn(tx.objectStore('kv'));
+    tx.oncomplete = () => res(rq && rq.result); tx.onerror = () => rej(tx.error);
+  });
+}
+async function loadFolder() {
+  if (!canFolder) return;
+  try {
+    folder.handle = (await idbDo('readonly', st => st.get('dir'))) || null;
+    if (folder.handle) folder.perm = await folder.handle.queryPermission({ mode: 'readwrite' });
+  } catch (e) { folder.handle = null; }
+  render();
+  if (folder.perm === 'granted') autoBackupSoon(2000);
+}
+async function pickFolder() {
+  try {
+    const h = await window.showDirectoryPicker({ id: 'ha-liste', mode: 'readwrite', startIn: 'documents' });
+    folder.handle = h; folder.perm = 'granted'; folder.err = null;
+    await idbDo('readwrite', st => st.put(h, 'dir'));
+    if (await writeToFolder(true)) afterBackup('Sicherungsordner „' + h.name + '“ eingerichtet');
+  } catch (e) { if (e && e.name !== 'AbortError') toast('Ordner konnte nicht gewählt werden'); }
+}
+async function forgetFolder() {
+  if (!confirm('Automatische Sicherung beenden? Die vorhandenen Dateien im Ordner bleiben erhalten.')) return;
+  try { await idbDo('readwrite', st => st.delete('dir')); } catch (e) { }
+  folder.handle = null; folder.perm = 'none'; folder.err = null;
+  renderSettings();
+}
+async function grantFolder() {
+  if (!folder.handle) return;
+  try { folder.perm = await folder.handle.requestPermission({ mode: 'readwrite' }); } catch (e) { folder.perm = 'denied'; }
+  if (folder.perm === 'granted' && await writeToFolder(true)) afterBackup('Sicherung aktiv');
+  else render();
+}
+// Schreibt die Tagesdatei (überschreibt sie im Laufe des Tages) und räumt alte Dateien auf.
+async function writeToFolder(interactive) {
+  const h = folder.handle; if (!h || folder.busy) return false;
+  folder.busy = true;
+  try {
+    let p = await h.queryPermission({ mode: 'readwrite' });
+    if (p !== 'granted' && interactive) p = await h.requestPermission({ mode: 'readwrite' });
+    folder.perm = p;
+    if (p !== 'granted') return false;
+    const fh = await h.getFileHandle(backupName(), { create: true });
+    const w = await fh.createWritable(); await w.write(backupText()); await w.close();
+    folder.err = null;
+    const keep = S.settings.keep;
+    if (keep > 0) {
+      const names = [];
+      for await (const [n, e] of h.entries()) if (e.kind === 'file' && /^HA-Liste_Backup_\d{4}-\d{2}-\d{2}\.json$/.test(n)) names.push(n);
+      names.sort().reverse().slice(keep).forEach(n => h.removeEntry(n).catch(() => { }));
+    }
+    return true;
+  } catch (e) { folder.err = (e && e.message) || 'Fehler'; return false; }
+  finally { folder.busy = false; }
+}
+let autoTimer = null;
+function autoBackupSoon(ms = 20000) {
+  if (!folder.handle || folder.perm !== 'granted') return;
+  clearTimeout(autoTimer);
+  autoTimer = setTimeout(async () => {
+    autoTimer = null;
+    if (await writeToFolder(false)) { S.lastBackup = Date.now(); persist(); }
+    else if (!dlg.open) render();
+  }, ms);
+}
+// Beim Verlassen/Wechseln des Tabs sofort sichern, wenn noch etwas aussteht
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden' && autoTimer) { clearTimeout(autoTimer); autoTimer = null; writeToFolder(false).then(ok => { if (ok) { S.lastBackup = Date.now(); persist(); } }); }
+});
 
 /* ---------- Dialoge ---------- */
 const dlg = $('#dlg');
@@ -605,8 +705,21 @@ function renderSettings() {
     </tbody></table>
     <div class="actions" style="justify-content:flex-start"><button class="btn small" data-dact="resetScale">Vorschlag wiederherstellen</button></div>
     <h4>Datensicherung</h4>
-    <p class="muted" style="margin-top:0">Alle Daten liegen nur auf diesem Gerät. Wird die App vom Home-Bildschirm gelöscht, sind auch die Daten weg. Letzte Sicherung: ${S.lastBackup ? new Date(S.lastBackup).toLocaleDateString('de-DE') : 'noch nie'}.</p>
-    <div class="actions" style="justify-content:flex-start"><button class="btn" data-dact="backup">Sicherung exportieren</button><button class="btn" data-dact="import">Sicherung importieren</button></div>
+    <p class="muted" style="margin-top:0">Alle Daten liegen nur auf diesem Gerät. Wird die App vom Home-Bildschirm gelöscht, sind auch die Daten weg. Letzte Sicherung: <b>${S.lastBackup ? new Date(S.lastBackup).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : 'noch nie'}</b>.</p>
+    ${canFolder ? (folder.handle ? `
+    <p style="margin:0 0 8px">Automatische Sicherung in Ordner <b>„${esc(folder.handle.name)}“</b> – ${folder.perm === 'granted' ? (folder.err ? '⚠️ letzter Versuch fehlgeschlagen' : '✓ aktiv') : '⏸ wartet auf Freigabe'}.</p>
+    <p class="muted" style="margin:0 0 8px">Nach jeder Änderung (spätestens 20 s später) wird die Tagesdatei <code>HA-Liste_Backup_JJJJ-MM-TT.json</code> aktualisiert. So entsteht eine Datei pro Tag.</p>
+    <div class="row2">
+      <div class="field"><label>Ältere Tagesdateien behalten</label><select data-dchg="keep">${[[7, '7 Tage'], [14, '14 Tage'], [30, '30 Tage'], [60, '60 Tage'], [0, 'alle behalten']].map(([v, l]) => `<option value="${v}" ${S.settings.keep == v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    </div>
+    <div class="actions" style="justify-content:flex-start">${folder.perm !== 'granted' ? '<button class="btn primary" data-dact="grantFolder">Freigeben</button>' : ''}<button class="btn" data-dact="pickFolder">Anderen Ordner wählen</button><button class="btn" data-dact="forgetFolder">Automatik beenden</button></div>` : `
+    <p class="muted" style="margin:0 0 8px">Wähle einmal einen Ordner (z. B. auf dem Schul-Laufwerk, in OneDrive oder auf einem USB-Stick). Danach sichert die App jede Änderung automatisch dorthin.</p>
+    <div class="actions" style="justify-content:flex-start"><button class="btn primary" data-dact="pickFolder">Sicherungsordner wählen…</button></div>`) : `
+    <p class="muted" style="margin:0 0 8px">Auf iPad/iPhone darf eine Web-App nicht selbstständig in einen Ordner schreiben. „Sicherung exportieren“ öffnet das Teilen-Menü: <b>In Dateien sichern</b> wählen – die Dateien-App merkt sich den zuletzt gewählten Ordner (z. B. iCloud Drive oder IServ).</p>
+    <div class="row2">
+      <div class="field"><label>An Sicherung erinnern nach</label><select data-dchg="erinn">${[[1, '1 Tag'], [3, '3 Tagen'], [7, '7 Tagen'], [14, '14 Tagen']].map(([v, l]) => `<option value="${v}" ${S.settings.erinn == v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+    </div>`}
+    <div class="actions" style="justify-content:flex-start"><button class="btn" data-dact="backup">${folder.handle && folder.perm === 'granted' ? 'Jetzt sichern' : 'Sicherung exportieren'}</button><button class="btn" data-dact="import">Sicherung importieren</button></div>
     <div class="actions" style="margin-top:20px"><button class="btn primary" data-close>Fertig</button></div>`);
 }
 dlg.addEventListener('click', e => {
@@ -639,6 +752,9 @@ dlg.addEventListener('click', e => {
     case 'resetScale': if (!confirm('Notenschlüssel auf den Vorschlag zurücksetzen?')) return; S.scales = defaultScales(); break;
     case 'backup': backup(); return;
     case 'import': $('#importFile').click(); return;
+    case 'pickFolder': pickFolder(); return;
+    case 'forgetFolder': forgetFolder(); return;
+    case 'grantFolder': grantFolder(); return;
   }
   save(); renderSettings();
 });
@@ -650,6 +766,7 @@ dlg.addEventListener('change', e => {
     if (!(v >= 1 && v <= 5) || (i > 0 && v > t2[i - 1]) || (i < 4 && v < t2[i + 1])) { toast('Wert muss zwischen den Nachbarnoten liegen (1–5)'); t.value = t2[i]; return; }
     t2[i] = v; save(); toast('Gespeichert'); return;
   }
+  if (f === 'erinn' || f === 'keep') { S.settings[f] = +t.value; save(); toast('Gespeichert'); return; }
   if (f === 'name') { const v = t.value.trim(); if (v) k.name = v; else t.value = k.name; }
   else if (f === 'w') k.w = parseFloat(t.value);
   else if (f === 'gelb' || f === 'rot') {
@@ -681,6 +798,7 @@ const acts = {
   openClass(b) { Object.assign(ui, { screen: 'class', cid: b.dataset.cid, tab: 'erfassen', date: today(), subj: null, detail: null, pick: null }); render(); scrollTo(0, 0); },
   addClass: () => classDialog(),
   backup: () => backup(),
+  grantFolder: () => grantFolder(),
   tab(b) { ui.tab = b.dataset.tab; ui.pick = null; render(); scrollTo(0, 0); },
   day(b) { ui.date = shiftDay(ui.date, +b.dataset.d); render(); },
   cat(b) { ui.cat = b.dataset.id; render(); },
@@ -823,6 +941,7 @@ $('#menu').onclick = renderSettings;
 window.addEventListener('storage', e => { if (e.key === KEY) { S = load(); render(); } });
 
 render();
+loadFolder();
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
   const hadController = !!navigator.serviceWorker.controller;
   navigator.serviceWorker.register('sw.js').catch(() => { });
